@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Kantong Plastik -->
+  <path d="M16 20 Q12 18 14 12 L20 8 L44 8 L50 12 Q52 18 48 20 L48 52 Q48 56 44 56 L20 56 Q16 56 16 52 Z" fill="#E0E0E0" stroke="#9E9E9E" stroke-width="2"/>
+  <path d="M20 8 L20 16 M44 8 L44 16" stroke="#9E9E9E" stroke-width="2"/>
+  <ellipse cx="32" cy="36" rx="10" ry="12" fill="#BDBDBD" opacity="0.5"/>
+</svg>
+

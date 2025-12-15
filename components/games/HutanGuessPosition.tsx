@@ -1,244 +1,358 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { animals, type Animal } from '@/lib/animalPositions';
+import { motion, AnimatePresence } from 'framer-motion';
+import Button from '@/components/Button';
+import Toast from '@/components/Toast';
+import SiLala from '@/app/components/SiLala';
+import LandscapePrompt from '@/components/LandscapePrompt';
+import SoundManager from '@/components/SoundManager';
 import { updateBadge } from '@/lib/storage';
 
-interface ToastState {
-  message: string;
-  visible: boolean;
+interface Animal {
+  id: string;
+  name: string;
+  emoji: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
-const TOTAL_ROUNDS = 5;
+// 5 hewan yang akan dicari (sesuai dengan hotspot di hutan)
+const allAnimals: Animal[] = [
+  { id: 'singa', name: 'Singa', emoji: '🦁', x: 12, y: 55, w: 16, h: 20 },
+  { id: 'toucan', name: 'Toucan', emoji: '🦜', x: 24, y: -20, w: 20, h: 20 },
+  { id: 'badak', name: 'Badak', emoji: '🦏', x: 36, y: 40, w: 32, h: 32 },
+  { id: 'gorilla', name: 'Gorilla', emoji: '🦍', x: 70, y: 58, w: 24, h: 24 },
+  { id: 'parrot', name: 'Burung Beo', emoji: '🦜', x: 80, y: 14, w: 18, h: 18 },
+];
 
 export default function HutanGuessPosition() {
   const router = useRouter();
   const [currentRound, setCurrentRound] = useState(0);
-  const [score, setScore] = useState(0);
-  const [targetAnimal, setTargetAnimal] = useState<Animal | null>(null);
-  const [targetOrder, setTargetOrder] = useState<string[]>([]);
   const [foundAnimals, setFoundAnimals] = useState<Set<string>>(new Set());
-  const [toast, setToast] = useState<ToastState>({ message: '', visible: false });
-  const [showComplete, setShowComplete] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [gameComplete, setGameComplete] = useState(false);
+  const [clickedPosition, setClickedPosition] = useState<{ x: number; y: number } | null>(null);
 
-  // Initialize game
-  useEffect(() => {
-    const shuffled = [...animals]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, TOTAL_ROUNDS)
-      .map((a) => a.id);
-    setTargetOrder(shuffled);
-    if (shuffled.length > 0) {
-      const firstTarget = animals.find((a) => a.id === shuffled[0]);
-      setTargetAnimal(firstTarget || null);
-    }
-  }, []);
+  // Hewan yang harus dicari di round ini
+  const currentAnimal = allAnimals[currentRound];
+  const totalRounds = allAnimals.length;
 
-  const showToast = useCallback((message: string) => {
-    setToast({ message, visible: true });
-    setTimeout(() => {
-      setToast({ message: '', visible: false });
-    }, 2000);
-  }, []);
+  // Cek apakah klik berada dalam area hewan
+  const isClickInAnimalArea = (clickX: number, clickY: number, animal: Animal): boolean => {
+    const animalLeft = animal.x - animal.w / 2;
+    const animalRight = animal.x + animal.w / 2;
+    const animalTop = animal.y - animal.h / 2;
+    const animalBottom = animal.y + animal.h / 2;
 
-  const handleOverlayClick = useCallback(
-    (animalId: string) => {
-      if (!targetAnimal || foundAnimals.has(animalId)) return;
+    return (
+      clickX >= animalLeft &&
+      clickX <= animalRight &&
+      clickY >= animalTop &&
+      clickY <= animalBottom
+    );
+  };
 
-      if (animalId === targetAnimal.id) {
-        // Benar!
-        setFoundAnimals((prev) => new Set([...prev, animalId]));
-        const newScore = score + 1;
-        setScore(newScore);
-        showToast('✅ Keren!');
+  const handleBackgroundClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (gameComplete || foundAnimals.has(currentAnimal.id)) return;
 
-        // Cek apakah selesai
-        if (currentRound === TOTAL_ROUNDS - 1) {
-          setTimeout(() => {
-            updateBadge('hutan', true);
-            setShowComplete(true);
-          }, 1000);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+    const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setClickedPosition({ x: clickX, y: clickY });
+
+    if (isClickInAnimalArea(clickX, clickY, currentAnimal)) {
+      // Benar! Temukan hewan
+      setFoundAnimals((prev) => new Set([...prev, currentAnimal.id]));
+      setToastMessage(`Benar! Kamu menemukan ${currentAnimal.name}!`);
+      setToastType('success');
+      setShowToast(true);
+
+      // Lanjut ke round berikutnya setelah 1.5 detik
+      setTimeout(() => {
+        if (currentRound < totalRounds - 1) {
+          setCurrentRound((prev) => prev + 1);
+          setClickedPosition(null);
         } else {
-          // Lanjut ke ronde berikutnya
+          // Game selesai
+          setGameComplete(true);
+          updateBadge('hutan', true);
           setTimeout(() => {
-            const nextRound = currentRound + 1;
-            setCurrentRound(nextRound);
-            const nextTargetId = targetOrder[nextRound];
-            const nextTarget = animals.find((a) => a.id === nextTargetId);
-            setTargetAnimal(nextTarget || null);
-          }, 1500);
+            setToastMessage('Hebat! Kamu sudah menyelesaikan semua round! 🏆');
+            setToastType('success');
+            setShowToast(true);
+          }, 500);
         }
-      } else {
-        // Salah
-        showToast('❌ Coba lagi');
-      }
-    },
-    [targetAnimal, foundAnimals, score, currentRound, targetOrder, showToast]
-  );
-
-  if (!targetAnimal || targetOrder.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-4xl">🌳</div>
-      </div>
-    );
-  }
-
-  if (showComplete) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-6xl mb-4">🎉</div>
-        <div className="text-2xl font-bold text-green-700 mb-8">Hebat!</div>
-        <button
-          onClick={() => router.push('/menu')}
-          className="rounded-full bg-green-500 px-8 py-4 text-xl font-bold text-white shadow-lg hover:bg-green-600 transition-all"
-        >
-          LANJUT
-        </button>
-      </div>
-    );
-  }
+      }, 1500);
+    } else {
+      // Salah
+      setToastMessage('Ups! Coba lagi ya! Cari dengan teliti! 👀');
+      setToastType('error');
+      setShowToast(true);
+      setTimeout(() => {
+        setClickedPosition(null);
+      }, 1000);
+    }
+  };
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background */}
+    <div className="fixed inset-0 overflow-hidden">
+      {/* Sound */}
+      <SoundManager src="/assets/sound/Game hutan.mp3" loop={true} volume={0.4} />
+
+      {/* Landscape Prompt for Mobile */}
+      <LandscapePrompt />
+
+      {/* Single Full Screen Background */}
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/assets/bg/hutan.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
         }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/50" />
-      </div>
+      />
 
-      <div className="relative z-10 min-h-screen p-4">
-        <div className="mx-auto max-w-5xl">
-          {/* Header - Minim Teks */}
-          <div className="mb-4 flex flex-col items-center gap-3">
-            {/* Target Pill */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-yellow-400 px-4 py-2 shadow-lg">
-              <span className="text-2xl">{targetAnimal.emoji}</span>
-              <span className="text-lg font-bold text-yellow-900">
-                {targetAnimal.name}
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30" />
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col p-3 md:p-4">
+        {/* Header - z-index tinggi agar tidak tertutup semak */}
+        <motion.div
+          className="text-center mb-2 relative z-50"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1
+            className="text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg"
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            Temukan Hewan Tersembunyi! 🔍
+          </h1>
+          <p
+            className="text-xs md:text-sm text-white drop-shadow-md"
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            Round {currentRound + 1} dari {totalRounds}
+          </p>
+        </motion.div>
+
+        {/* Question - Hewan yang harus dicari - z-index tinggi */}
+        <motion.div
+          className="bg-white/95 rounded-2xl p-3 md:p-4 mb-3 mx-auto max-w-md shadow-xl relative z-50"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <p
+            className="text-lg md:text-xl font-bold text-center text-gray-800"
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            Dimana letak <span className="text-green-600">{currentAnimal.name}</span> berada?
+          </p>
+          <p
+            className="text-sm md:text-base text-center text-gray-600 mt-2"
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            Ketuk di hutan untuk menemukannya!
+          </p>
+        </motion.div>
+
+        {/* Progress - Round indicator - z-index tinggi */}
+        <motion.div
+          className="flex justify-center gap-2 mb-2 relative z-50"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          {allAnimals.map((animal, index) => (
+            <div
+              key={animal.id}
+              className={`rounded-full px-3 md:px-4 py-2 shadow-lg flex items-center justify-center ${
+                index < currentRound || foundAnimals.has(animal.id)
+                  ? 'bg-green-400 ring-2 ring-green-600'
+                  : index === currentRound
+                  ? 'bg-yellow-400 ring-2 ring-yellow-600'
+                  : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`text-sm md:text-base font-bold ${
+                  index < currentRound || foundAnimals.has(animal.id)
+                    ? 'text-green-800'
+                    : index === currentRound
+                    ? 'text-yellow-800'
+                    : 'text-gray-500'
+                }`}
+                style={{ fontFamily: 'var(--font-baloo)' }}
+              >
+                {index < currentRound || foundAnimals.has(animal.id) ? '✓' : index === currentRound ? '?' : '○'}
               </span>
             </div>
+          ))}
+        </motion.div>
 
-            {/* Skor sebagai dot */}
-            <div className="flex gap-2">
-              {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`text-2xl ${
-                    idx < score ? 'text-yellow-400' : 'text-gray-400'
-                  }`}
-                >
-                  {idx < score ? '⭐' : '☆'}
-                </span>
-              ))}
-            </div>
+        {/* Clickable Background Area */}
+        <div
+          className="flex-1 relative cursor-crosshair"
+          onClick={handleBackgroundClick}
+        >
+          {/* Semua hewan - sembunyikan yang belum ditemukan dengan semak */}
+          {allAnimals.map((animal) => {
+            const isFound = foundAnimals.has(animal.id);
 
-            {/* Progress dot kecil */}
-            <div className="flex gap-1">
-              {Array.from({ length: TOTAL_ROUNDS }).map((_, idx) => (
+            // Jika sudah ditemukan, tidak perlu render apa-apa (biarkan hewan di background terlihat)
+            if (isFound) return null;
+
+            return (
+              <motion.div
+                key={animal.id}
+                className="absolute flex items-center justify-center overflow-visible"
+                style={{
+                  left: `${animal.x}%`,
+                  top: `${animal.y}%`,
+                  width: `${animal.w}%`,
+                  height: `${animal.h}%`,
+                  transform: 'translate(-50%, -50%)',
+                  minWidth: '60px',
+                  minHeight: '60px',
+                  zIndex: 5, // Z-index rendah agar tidak menutupi UI
+                }}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", duration: 0.6 }}
+              >
+                {/* Semak sangat tebal untuk benar-benar menyembunyikan hewan - lebih besar dan lebih gelap */}
                 <div
-                  key={idx}
-                  className={`h-2 w-2 rounded-full ${
-                    idx < score
-                      ? 'bg-green-500'
-                      : idx === currentRound
-                        ? 'bg-yellow-400'
-                        : 'bg-gray-400'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Game Area */}
-          <div
-            className="relative mx-auto w-full rounded-2xl overflow-hidden shadow-2xl"
-            style={{ aspectRatio: '16/9', maxHeight: '70vh' }}
-          >
-            {/* Background gambar */}
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: "url('/assets/bg/hutan.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            />
-
-            {/* Overlay semak untuk setiap hewan */}
-            {animals.map((animal) => {
-              const isFound = foundAnimals.has(animal.id);
-              if (isFound) return null;
-
-              return (
-                <button
-                  key={animal.id}
-                  onClick={() => handleOverlayClick(animal.id)}
-                  className="absolute rounded-xl transition-all hover:opacity-80 active:scale-95"
+                  className="rounded-2xl flex items-center justify-center relative"
                   style={{
-                    left: `${animal.x - animal.width / 2}%`,
-                    top: `${animal.y - animal.height / 2}%`,
-                    width: `${animal.width}%`,
-                    height: `${animal.height}%`,
+                    // Semak jauh lebih besar untuk menutupi seluruh hewan (200% dari ukuran)
+                    width: `${Math.max(animal.w * 2, 200)}%`,
+                    height: `${Math.max(animal.h * 2, 200)}%`,
+                    // Background sangat gelap dan benar-benar opaque
+                    background: 'linear-gradient(135deg, rgba(0, 30, 0, 1) 0%, rgba(0, 20, 0, 1) 25%, rgba(0, 40, 0, 1) 50%, rgba(0, 20, 0, 1) 75%, rgba(0, 30, 0, 1) 100%)',
+                    boxShadow: '0 15px 40px rgba(0, 0, 0, 0.9), inset 0 5px 20px rgba(0, 0, 0, 0.7), inset 0 -5px 20px rgba(0, 0, 0, 0.5)',
+                    border: '5px solid rgba(0, 60, 0, 1)',
+                    opacity: 1,
                   }}
-                  aria-label={`Cari ${animal.name}`}
                 >
-                  {/* Overlay semak hijau */}
+                  {/* Lapisan semak tambahan untuk efek lebih tebal - multiple layers */}
                   <div
-                    className="h-full w-full rounded-xl"
+                    className="absolute inset-0 rounded-2xl"
                     style={{
-                      background: `linear-gradient(135deg, rgba(34, 139, 34, 0.85) 0%, rgba(0, 100, 0, 0.95) 100%)`,
+                      background: 'radial-gradient(circle at 20% 20%, rgba(0, 80, 0, 0.8) 0%, transparent 35%), radial-gradient(circle at 80% 80%, rgba(0, 60, 0, 0.9) 0%, transparent 35%), radial-gradient(circle at 50% 50%, rgba(0, 40, 0, 0.7) 0%, transparent 50%)',
                     }}
-                  >
-                    {/* Pattern daun */}
-                    <div
-                      className="absolute inset-0 opacity-60"
+                  />
+                  {/* Lapisan gelap tambahan untuk benar-benar menutupi */}
+                  <div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'rgba(0, 15, 0, 0.6)',
+                    }}
+                  />
+                  {/* Lapisan gelap lagi untuk extra coverage */}
+                  <div
+                    className="absolute inset-0 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(45deg, rgba(0, 25, 0, 0.5) 0%, rgba(0, 15, 0, 0.7) 100%)',
+                    }}
+                  />
+                  {/* Ikon daun di tengah - lebih banyak untuk menutupi */}
+                  <span className="text-5xl md:text-6xl relative z-10 opacity-95">🌿</span>
+                  {/* Daun tambahan untuk efek lebih natural dan menutupi lebih banyak area */}
+                  <span className="absolute text-4xl md:text-5xl z-10" style={{ top: '0%', left: '10%', opacity: 0.9 }}>🌿</span>
+                  <span className="absolute text-4xl md:text-5xl z-10" style={{ bottom: '5%', right: '15%', opacity: 0.9 }}>🌿</span>
+                  <span className="absolute text-3xl md:text-4xl z-10" style={{ top: '20%', right: '5%', opacity: 0.8 }}>🍃</span>
+                  <span className="absolute text-3xl md:text-4xl z-10" style={{ bottom: '20%', left: '5%', opacity: 0.8 }}>🍃</span>
+                  <span className="absolute text-3xl md:text-4xl z-10" style={{ top: '50%', left: '0%', opacity: 0.75 }}>🌿</span>
+                  <span className="absolute text-3xl md:text-4xl z-10" style={{ top: '50%', right: '0%', opacity: 0.75 }}>🌿</span>
+                  
+                  {/* Pulse animation hanya untuk hewan yang sedang dicari */}
+                  {animal.id === currentAnimal.id && (
+                    <motion.div
+                      className="absolute rounded-2xl border-4 border-green-300"
                       style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000' fill-opacity='0.4'%3E%3Cpath d='M20 20c0-5-5-10-10-10s-10 5-10 10 5 10 10 10 10-5 10-10zm10 0c0-5-5-10-10-10s-10 5-10 10 5 10 10 10 10-5 10-10z'/%3E%3C/g%3E%3C/svg%3E")`,
-                        backgroundSize: '20px 20px',
+                        width: `${Math.max(animal.w * 2, 200)}%`,
+                        height: `${Math.max(animal.h * 2, 200)}%`,
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
                       }}
+                      animate={{
+                        scale: [1, 1.15, 1],
+                        opacity: [0.5, 0, 0.5],
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
                     />
-                  </div>
-                </button>
-              );
-            })}
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
 
-            {/* Label kecil */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-500/90 rounded-lg px-3 py-1">
-              <span className="text-xs font-semibold text-white">👇 klik semak</span>
-            </div>
-          </div>
-
-          {/* Tombol Home */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => router.push('/menu')}
-              className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-gray-800 shadow-md hover:bg-white transition-all"
-              aria-label="Kembali ke menu"
-            >
-              <span className="text-lg">🏠</span>
-              <span>Menu</span>
-            </button>
-          </div>
+          {/* Click indicator */}
+          <AnimatePresence>
+            {clickedPosition && (
+              <motion.div
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${clickedPosition.x}%`,
+                  top: `${clickedPosition.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+                initial={{ scale: 0, opacity: 1 }}
+                animate={{ scale: 2, opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="w-4 h-4 bg-white rounded-full border-2 border-blue-500" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Si Lala - pojok kiri bawah */}
+        <motion.div
+          className="absolute bottom-20 left-4 md:bottom-24 md:left-8 z-30"
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <SiLala size={60} animate={false} />
+        </motion.div>
+
+        {/* Button */}
+        <motion.div
+          className="flex justify-center z-30 px-3 sm:px-4 mt-2"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          {gameComplete ? (
+            <Button onClick={() => router.push('/menu')} variant="primary">
+              🏠 LANJUT
+            </Button>
+          ) : (
+            <Button onClick={() => router.push('/hutan')} variant="secondary">
+              ← Kembali
+            </Button>
+          )}
+        </motion.div>
       </div>
 
-      {/* Toast */}
-      {toast.visible && (
-        <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-4">
-          <div className="rounded-full bg-green-500 px-6 py-3 text-xl font-bold text-white shadow-2xl">
-            {toast.message}
-          </div>
-        </div>
-      )}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        duration={2000}
+      />
     </div>
   );
 }
-

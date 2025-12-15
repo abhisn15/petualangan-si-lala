@@ -86,7 +86,7 @@ export default function CalibratePage() {
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="mx-auto max-w-7xl">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">🔧 Kalibrasi Posisi Hewan</h1>
+          <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-baloo)' }}>🔧 Kalibrasi Posisi Hewan</h1>
           <div className="flex gap-2">
             <Button onClick={copyToClipboard} variant="primary">
               Copy Kode
@@ -104,7 +104,7 @@ export default function CalibratePage() {
           {/* Game Area */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg p-4 shadow-lg">
-              <h2 className="mb-2 font-semibold">Drag overlay untuk menyesuaikan posisi</h2>
+              <h2 className="mb-2 font-semibold" style={{ fontFamily: 'var(--font-baloo)' }}>Drag overlay untuk menyesuaikan posisi</h2>
               <div
                 ref={gameAreaRef}
                 className="relative w-full rounded-lg overflow-hidden shadow-inner"
@@ -159,7 +159,7 @@ export default function CalibratePage() {
                       </div>
 
                       {/* Label */}
-                      <div className="absolute -top-6 left-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded whitespace-nowrap">
+                      <div className="absolute -top-6 left-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded whitespace-nowrap" style={{ fontFamily: 'var(--font-baloo)' }}>
                         {animal.emoji} {animal.name}
                       </div>
 
@@ -251,7 +251,7 @@ export default function CalibratePage() {
           {/* Control Panel */}
           <div className="space-y-4">
             <div className="bg-white rounded-lg p-4 shadow-lg">
-              <h3 className="font-bold mb-2">Pilih Hewan</h3>
+              <h3 className="font-bold mb-2" style={{ fontFamily: 'var(--font-baloo)' }}>Pilih Hewan</h3>
               <div className="space-y-2">
                 {animals.map((animal) => (
                   <button
@@ -271,7 +271,7 @@ export default function CalibratePage() {
 
             {selectedAnimal && (
               <div className="bg-white rounded-lg p-4 shadow-lg">
-                <h3 className="font-bold mb-2">
+                <h3 className="font-bold mb-2" style={{ fontFamily: 'var(--font-baloo)' }}>
                   Edit: {animals.find((a) => a.id === selectedAnimal)?.name}
                 </h3>
                 {animals
@@ -279,7 +279,7 @@ export default function CalibratePage() {
                   .map((animal) => (
                     <div key={animal.id} className="space-y-3">
                       <div>
-                        <label className="text-sm font-semibold block mb-1">
+                        <label className="text-sm font-semibold block mb-1" style={{ fontFamily: 'var(--font-baloo)' }}>
                           X: {animal.x.toFixed(1)}%
                         </label>
                         <input
@@ -301,7 +301,7 @@ export default function CalibratePage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-semibold block mb-1">
+                        <label className="text-sm font-semibold block mb-1" style={{ fontFamily: 'var(--font-baloo)' }}>
                           Y: {animal.y.toFixed(1)}%
                         </label>
                         <input
@@ -323,7 +323,7 @@ export default function CalibratePage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-semibold block mb-1">
+                        <label className="text-sm font-semibold block mb-1" style={{ fontFamily: 'var(--font-baloo)' }}>
                           Width: {animal.width.toFixed(1)}%
                         </label>
                         <input
@@ -345,7 +345,7 @@ export default function CalibratePage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-semibold block mb-1">
+                        <label className="text-sm font-semibold block mb-1" style={{ fontFamily: 'var(--font-baloo)' }}>
                           Height: {animal.height.toFixed(1)}%
                         </label>
                         <input
@@ -366,7 +366,7 @@ export default function CalibratePage() {
                           className="w-full"
                         />
                       </div>
-                      <div className="p-2 bg-gray-100 rounded text-xs font-mono break-all">
+                      <div className="p-2 bg-gray-100 rounded text-xs break-all" style={{ fontFamily: 'var(--font-baloo)' }}>
                         {`x: ${animal.x.toFixed(1)}, y: ${animal.y.toFixed(1)}, width: ${animal.width.toFixed(1)}, height: ${animal.height.toFixed(1)}`}
                       </div>
                     </div>

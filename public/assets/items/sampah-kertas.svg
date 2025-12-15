@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 90" width="80" height="90">
+  <!-- Kertas Kusut Realistis -->
+  <defs>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF9C4" />
+      <stop offset="50%" style="stop-color:#FFFDE7" />
+      <stop offset="100%" style="stop-color:#FFF59D" />
+    </linearGradient>
+  </defs>
+  <!-- Kertas kusut utama -->
+  <path d="M15 20 Q10 15 18 10 L55 8 Q65 10 68 18 L72 65 Q70 75 60 78 L25 82 Q12 80 10 68 L8 35 Q8 25 15 20 Z" 
+        fill="url(#paperGrad)" stroke="#FBC02D" stroke-width="1"/>
+  <!-- Lipatan kertas -->
+  <path d="M55 8 L48 25 L68 18" fill="#FFF9C4" stroke="#FBC02D" stroke-width="0.5"/>
+  <!-- Garis tulisan -->
+  <line x1="18" y1="30" x2="55" y2="28" stroke="#E0E0E0" stroke-width="2"/>
+  <line x1="18" y1="40" x2="60" y2="38" stroke="#E0E0E0" stroke-width="2"/>
+  <line x1="18" y1="50" x2="52" y2="48" stroke="#E0E0E0" stroke-width="2"/>
+  <line x1="18" y1="60" x2="58" y2="58" stroke="#E0E0E0" stroke-width="2"/>
+  <!-- Kusut/lipatan -->
+  <path d="M25 25 Q35 30 30 45 Q28 55 35 65" stroke="#FFE082" stroke-width="1.5" fill="none"/>
+  <path d="M50 20 Q55 35 48 50" stroke="#FFE082" stroke-width="1" fill="none"/>
+</svg>
+

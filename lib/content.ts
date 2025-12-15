@@ -1,133 +1,155 @@
 import { Environment } from './types';
 
 export const petunjukText = `
-Cara Bermain:
-
-1. Pilih salah satu lingkungan yang ingin kamu jelajahi (Hutan, Taman Kota, atau Pantai)
-2. Ketuk objek-objek yang ada di lingkungan untuk melihat penjelasan
-3. Setelah selesai menjelajahi, klik tombol "MULAI TANTANGAN" untuk bermain game
-4. Selesaikan tantangan untuk mendapatkan lencana!
-
-Aturan Game:
-
-• Game Hutan: Temukan 3 target yang tersembunyi dengan mengklik area yang tepat
-• Game Taman: Pilah sampah dengan benar dalam 3 langkah
-• Game Pantai: Bersihkan 3 sampah plastik yang ada di pantai
-
-Kumpulkan semua 3 lencana untuk membuka halaman Reward!
+Ketuk setiap gambar untuk melihat penjelasannya. Selesaikan semua game untuk mendapatkan lencana!
 `;
 
 export const tentangText = `
-Petualangan Lingkungan Si Lala adalah aplikasi edukasi interaktif yang mengajak anak-anak untuk belajar tentang lingkungan melalui petualangan yang menyenangkan.
-
-Jelajahi tiga lingkungan berbeda:
-• Hutan - Pelajari tentang ekosistem hutan dan keanekaragaman hayati
-• Taman Kota - Pahami pentingnya menjaga kebersihan dan memilah sampah
-• Pantai - Ketahui dampak sampah plastik terhadap kehidupan laut
-
-Setiap lingkungan memiliki tantangan unik yang harus diselesaikan untuk mendapatkan lencana. Kumpulkan semua lencana dan jadilah pahlawan lingkungan!
+Aplikasi ini mengajak anak-anak belajar tentang lingkungan alam, kebersihan, dan cara menjaga bumi.
 `;
 
 export const environments: Environment[] = [
   {
     id: 'hutan',
-    title: 'Hutan',
+    title: 'Hutan Hijau yang Indah!',
     badgeName: 'Pahlawan Hutan',
+    narration: 'Hutan adalah rumah bagi banyak hewan dan tumbuhan. Yuk kenalan!',
     hotspots: [
       {
-        id: 'pohon1',
-        title: 'Pohon Besar',
-        body: 'Pohon ini adalah rumah bagi banyak hewan. Akarnya menahan tanah agar tidak longsor.',
-        x: 20,
-        y: 30,
-        w: 15,
-        h: 25,
-      },
-      {
-        id: 'burung',
-        title: 'Burung',
-        body: 'Burung membantu menyebarkan biji-biji tanaman ke tempat lain. Mereka penting untuk ekosistem hutan.',
-        x: 60,
-        y: 15,
+        id: 'burung_hantu',
+        title: 'Burung Hantu 🦉',
+        body: 'Burung hantu suka berburu di malam hari. Mereka punya mata yang tajam.',
+        emoji: '🦉',
+        x: 15,
+        y: 20,
         w: 12,
         h: 15,
       },
       {
+        id: 'rusa',
+        title: 'Rusa 🦌',
+        body: 'Rusa adalah hewan pemakan tumbuhan. Mereka berlari sangat cepat!',
+        emoji: '🦌',
+        x: 50,
+        y: 50,
+        w: 15,
+        h: 18,
+      },
+      {
         id: 'jamur',
-        title: 'Jamur',
-        body: 'Jamur membantu mengurai daun-daun yang jatuh menjadi nutrisi untuk tanah.',
-        x: 45,
+        title: 'Jamur 🍄',
+        body: 'Jamur tumbuh di tempat lembab. Jangan dimakan tanpa izin orang dewasa.',
+        emoji: '🍄',
+        x: 30,
         y: 70,
         w: 10,
         h: 12,
+      },
+      {
+        id: 'pohon_besar',
+        title: 'Pohon Besar 🌳',
+        body: 'Pohon menghasilkan oksigen yang kita hirup setiap hari.',
+        emoji: '🌳',
+        x: 65,
+        y: 25,
+        w: 18,
+        h: 30,
+      },
+      {
+        id: 'sungai',
+        title: 'Sungai 💧',
+        body: 'Sungai adalah tempat minum hewan dan mengalirkan air ke hutan.',
+        emoji: '💧',
+        x: 5,
+        y: 60,
+        w: 20,
+        h: 15,
       },
     ],
   },
   {
     id: 'taman',
-    title: 'Taman Kota',
+    title: 'Taman Kota yang Bersih!',
     badgeName: 'Penjaga Taman',
+    narration: 'Di taman, kita harus menjaga kebersihan supaya nyaman dan sehat.',
     hotspots: [
       {
-        id: 'tempat_sampah',
-        title: 'Tempat Sampah',
-        body: 'Tempat sampah membantu menjaga kebersihan taman. Pastikan sampah dibuang pada tempatnya.',
-        x: 30,
+        id: 'organik',
+        title: 'Organik (Hijau) 🟢',
+        body: 'Sampah organik berasal dari sisa makhluk hidup, seperti daun dan sisa makanan.',
+        emoji: '🟢',
+        x: 20,
         y: 50,
-        w: 18,
+        w: 15,
         h: 20,
       },
       {
-        id: 'tanaman',
-        title: 'Tanaman Hias',
-        body: 'Tanaman membuat udara lebih segar dan taman lebih indah. Rawatlah dengan baik!',
-        x: 65,
-        y: 40,
+        id: 'plastik',
+        title: 'Plastik (Kuning) 🟡',
+        body: 'Plastik butuh waktu lama untuk terurai. Jadi harus didaur ulang.',
+        emoji: '🟡',
+        x: 45,
+        y: 50,
         w: 15,
-        h: 18,
+        h: 20,
       },
       {
-        id: 'bangku',
-        title: 'Bangku Taman',
-        body: 'Bangku ini terbuat dari bahan daur ulang. Daur ulang membantu mengurangi sampah.',
-        x: 50,
-        y: 65,
-        w: 14,
-        h: 16,
+        id: 'kertas',
+        title: 'Kertas (Biru) 🔵',
+        body: 'Kertas bisa didaur ulang menjadi kertas baru. Jangan dibuang sembarangan!',
+        emoji: '🔵',
+        x: 70,
+        y: 50,
+        w: 15,
+        h: 20,
       },
     ],
   },
   {
     id: 'pantai',
-    title: 'Pantai',
+    title: 'Pantai Biru yang Indah!',
     badgeName: 'Sahabat Laut',
+    narration: 'Pantai adalah rumah bagi hewan laut. Tapi sampah bisa membahayakan mereka.',
     hotspots: [
       {
+        id: 'penyu',
+        title: 'Penyu 🐢',
+        body: 'Penyu bisa salah makan plastik karena dikira ubur-ubur.',
+        emoji: '🐢',
+        x: 25,
+        y: 40,
+        w: 15,
+        h: 12,
+      },
+      {
+        id: 'kepiting',
+        title: 'Kepiting 🦀',
+        body: 'Kepiting hidup di pasir dan mencari makan di tepi pantai.',
+        emoji: '🦀',
+        x: 60,
+        y: 65,
+        w: 12,
+        h: 10,
+      },
+      {
+        id: 'karang',
+        title: 'Karang Laut 🪸',
+        body: 'Karang adalah rumah ikan. Kita harus menjaganya dari polusi.',
+        emoji: '🪸',
+        x: 50,
+        y: 55,
+        w: 18,
+        h: 15,
+      },
+      {
         id: 'ombak',
-        title: 'Ombak',
-        body: 'Ombak membawa nutrisi penting untuk kehidupan laut. Tapi sampah plastik bisa merusak ekosistem.',
+        title: 'Ombak 🌊',
+        body: 'Ombak membawa air segar ke pantai.',
+        emoji: '🌊',
         x: 10,
         y: 20,
         w: 25,
         h: 15,
-      },
-      {
-        id: 'karang',
-        title: 'Terumbu Karang',
-        body: 'Terumbu karang adalah rumah bagi banyak ikan. Sampah plastik bisa merusak terumbu karang.',
-        x: 55,
-        y: 60,
-        w: 20,
-        h: 18,
-      },
-      {
-        id: 'kura',
-        title: 'Kura-kura',
-        body: 'Kura-kura laut sering mengira sampah plastik sebagai makanan. Ini sangat berbahaya bagi mereka.',
-        x: 70,
-        y: 35,
-        w: 15,
-        h: 12,
       },
     ],
   },

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import CardEnv from '@/components/CardEnv';
 import Button from '@/components/Button';
+import SiLala from '@/app/components/SiLala';
 import { resetBadges } from '@/lib/storage';
 import Toast from '@/components/Toast';
 
@@ -27,26 +29,97 @@ export default function MenuPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-cyan-50 p-8">
-      <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-center text-5xl font-bold text-green-800 md:text-6xl">
-          Pilih Lingkungan
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-cyan-50 overflow-y-auto">
 
-        <div className="mb-8 grid gap-8 md:grid-cols-3">
-          <CardEnv id="hutan" title="Hutan" badgeName="Pahlawan Hutan" />
-          <CardEnv id="taman" title="Taman Kota" badgeName="Penjaga Taman" />
-          <CardEnv id="pantai" title="Pantai" badgeName="Sahabat Laut" />
-        </div>
+      <div className="mx-auto max-w-7xl min-h-screen flex flex-col p-3 sm:p-4 md:p-6">
+        {/* Si Lala Welcome - Compact */}
+        <motion.div
+          className="flex flex-col items-center mb-3 sm:mb-4 md:mb-6 flex-shrink-0"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, type: "spring" }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+          >
+            <SiLala size={60} className="sm:w-16 sm:h-16 md:w-20 md:h-20" />
+          </motion.div>
+          <motion.h1
+            className="text-center text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-green-800 px-2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            Pilih Lingkungan yang Ingin Kamu Jelajahi! 🌍
+          </motion.h1>
+        </motion.div>
 
-        <div className="flex flex-col gap-4 text-center sm:flex-row sm:justify-center">
+        {/* Cards Grid - Scrollable */}
+        <motion.div
+          className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 flex-1 mb-4 sm:mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <motion.div
+            className="h-[280px] sm:h-[320px] md:h-[400px] lg:h-full"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <CardEnv 
+              id="hutan" 
+              title="Hutan" 
+              badgeName="Pahlawan Hutan"
+              description="Kenalan dengan tumbuhan dan hewan yang tinggal di hutan."
+            />
+          </motion.div>
+          <motion.div
+            className="h-[280px] sm:h-[320px] md:h-[400px] lg:h-full"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <CardEnv 
+              id="taman" 
+              title="Taman Kota" 
+              badgeName="Penjaga Taman"
+              description="Belajar memilah sampah dan menjaga kebersihan."
+            />
+          </motion.div>
+          <motion.div
+            className="h-[280px] sm:h-[320px] md:h-[400px] lg:h-full"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <CardEnv 
+              id="pantai" 
+              title="Pantai" 
+              badgeName="Sahabat Laut"
+              description="Menjaga laut agar tetap bersih dan aman untuk hewan laut."
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* Buttons - Fixed at bottom */}
+        <motion.div
+          className="flex flex-col gap-2 sm:gap-3 text-center sm:flex-row sm:justify-center flex-shrink-0 pb-2 sm:pb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.9 }}
+        >
           <Button href="/reward" variant="secondary">
-            Lihat Reward
+            🏆 Lihat Reward
           </Button>
           <Button onClick={handleReset} variant="danger">
-            Reset Progress
+            🔄 Reset Progress
           </Button>
-        </div>
+        </motion.div>
       </div>
 
       <Toast
@@ -59,4 +132,3 @@ export default function MenuPage() {
     </div>
   );
 }
-

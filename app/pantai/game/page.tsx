@@ -2,96 +2,55 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import Button from '@/components/Button';
 import Toast from '@/components/Toast';
+import SiLala from '@/app/components/SiLala';
+import LandscapePrompt from '@/components/LandscapePrompt';
+import SoundManager from '@/components/SoundManager';
 import { updateBadge } from '@/lib/storage';
 
-type WasteType = 'organik' | 'anorganik' | 'b3';
-
-interface WasteItem {
+interface TrashItem {
   id: number;
   name: string;
-  type: WasteType;
-  emoji: string;
+  image: string;
   x: number;
   y: number;
-}
-
-interface TrashBin {
-  id: string;
-  type: WasteType;
-  label: string;
-  emoji: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  rotate: number;
+  size: number;
 }
 
 export default function PantaiGamePage() {
   const router = useRouter();
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [cleanedItems, setCleanedItems] = useState<Set<number>>(new Set());
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [gameComplete, setGameComplete] = useState(false);
+  const [showHappyFish, setShowHappyFish] = useState(false);
 
-  const wasteItems: WasteItem[] = [
-    { id: 1, name: 'Botol Plastik', type: 'anorganik', emoji: '🍶', x: 15, y: 45 },
-    { id: 2, name: 'Kantong Plastik', type: 'anorganik', emoji: '🛍️', x: 40, y: 60 },
-    { id: 3, name: 'Sedotan', type: 'anorganik', emoji: '🥤', x: 70, y: 50 },
-    { id: 4, name: 'Sisa Makanan', type: 'organik', emoji: '🍌', x: 25, y: 35 },
-    { id: 5, name: 'Daun Kering', type: 'organik', emoji: '🍃', x: 60, y: 40 },
-    { id: 6, name: 'Baterai', type: 'b3', emoji: '🔋', x: 85, y: 30 },
+  // Sampah berserakan di pantai - posisi natural
+  const trashItems: TrashItem[] = [
+    { id: 1, name: 'Botol Plastik', image: '/assets/items/sampah-botol.svg', x: 30, y: 75, rotate: -20, size: 45 },
+    { id: 2, name: 'Kantong Plastik', image: '/assets/items/sampah-kantong.svg', x: 55, y: 68, rotate: 15, size: 40 },
+    { id: 3, name: 'Kaleng Bekas', image: '/assets/items/sampah-kaleng.svg', x: 75, y: 72, rotate: -10, size: 38 },
+    { id: 4, name: 'Botol Plastik', image: '/assets/items/sampah-botol.svg', x: 45, y: 82, rotate: 25, size: 42 },
+    { id: 5, name: 'Kantong Plastik', image: '/assets/items/sampah-kantong.svg', x: 65, y: 80, rotate: -30, size: 38 },
   ];
 
-  const trashBins: TrashBin[] = [
-    {
-      id: 'organik',
-      type: 'organik',
-      label: 'Organik',
-      emoji: '🟢',
-      x: 20,
-      y: 80,
-      width: 20,
-      height: 15,
-    },
-    {
-      id: 'anorganik',
-      type: 'anorganik',
-      label: 'Anorganik',
-      emoji: '🔵',
-      x: 50,
-      y: 80,
-      width: 20,
-      height: 15,
-    },
-    {
-      id: 'b3',
-      type: 'b3',
-      label: 'B3',
-      emoji: '🔴',
-      x: 80,
-      y: 80,
-      width: 15,
-      height: 15,
-    },
-  ];
+  // Posisi keranjang di pojok - kita pakai area invisible
+  const basketPosition = { x: 88, y: 85, w: 12, h: 14 };
 
   const handleDragStart = (e: React.DragEvent, itemId: number) => {
     if (cleanedItems.has(itemId)) {
       e.preventDefault();
       return;
     }
-    
     setDraggedItem(itemId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', itemId.toString());
-    
-    // Buat drag image yang lebih jelas
-    const img = new Image();
-    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=';
-    e.dataTransfer.setDragImage(img, 25, 25);
   };
 
   const handleDragEnd = () => {
@@ -103,57 +62,30 @@ export default function PantaiGamePage() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, binType: WasteType) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     
     if (!draggedItem) return;
 
-    const wasteItem = wasteItems.find((item) => item.id === draggedItem);
-    if (!wasteItem) return;
+    const trashItem = trashItems.find((item) => item.id === draggedItem);
+    if (!trashItem) return;
 
-    // Validasi apakah sampah sesuai dengan jenis tong sampah
-    if (wasteItem.type === binType) {
-      // Benar!
-      setCleanedItems((prev) => new Set([...prev, draggedItem]));
-      const newCount = cleanedItems.size + 1;
-      
-      const successMessages = [
-        `Keren! ${wasteItem.name} sudah di tempat yang benar! 🎉`,
-        `Hebat! ${wasteItem.name} sudah dibuang dengan benar! 🌟`,
-        `Mantap! ${wasteItem.name} sudah di tong sampah yang tepat! ⭐`,
-      ];
-      const randomMessage =
-        successMessages[Math.floor(Math.random() * successMessages.length)];
-      
-      setToastMessage(`${randomMessage} (${newCount}/${wasteItems.length})`);
-      setToastType('success');
-      setShowToast(true);
+    setCleanedItems((prev) => new Set([...prev, draggedItem]));
+    const newCount = cleanedItems.size + 1;
+    
+    setToastMessage(`Bagus! ${trashItem.name} sudah dibuang! 🎉`);
+    setToastType('success');
+    setShowToast(true);
 
-      // Cek apakah semua sampah sudah dibersihkan
-      if (newCount === wasteItems.length) {
-        setTimeout(() => {
-          updateBadge('pantai', true);
-          setToastMessage('Selamat! Kamu mendapatkan lencana "Sahabat Laut"! 🏆');
-          setToastType('success');
-          setShowToast(true);
-          setTimeout(() => {
-            router.push('/menu');
-          }, 2000);
-        }, 1000);
-      }
-    } else {
-      // Salah!
-      const binLabels: Record<WasteType, string> = {
-        organik: 'Organik',
-        anorganik: 'Anorganik',
-        b3: 'B3',
-      };
-      
-      setToastMessage(
-        `❌ ${wasteItem.name} bukan sampah ${binLabels[binType]}! Coba lagi!`
-      );
-      setToastType('error');
-      setShowToast(true);
+    if (newCount === trashItems.length) {
+      setGameComplete(true);
+      setShowHappyFish(true);
+      setTimeout(() => {
+        updateBadge('pantai', true);
+        setToastMessage('Pantai bersih! Hewan laut senang! 🏆');
+        setToastType('success');
+        setShowToast(true);
+      }, 1000);
     }
 
     setDraggedItem(null);
@@ -162,159 +94,188 @@ export default function PantaiGamePage() {
   const cleanedCount = cleanedItems.size;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="fixed inset-0 overflow-hidden">
+      {/* Sound */}
+      <SoundManager src="/assets/sound/Modul pantai.mp3" loop={true} volume={0.4} />
+
+      {/* Landscape Prompt for Mobile */}
+      <LandscapePrompt />
+
+      {/* Single Full Screen Background */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/assets/bg/pantai.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
         }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
-      </div>
+      />
 
-      <div className="relative z-10 min-h-screen p-4 md:p-8">
-        <div className="mx-auto max-w-5xl">
-          <h1 className="mb-2 text-center text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
-            Game Pantai
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col p-3 md:p-4">
+        {/* Header */}
+        <motion.div
+          className="text-center mb-2"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1
+            className="text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg"
+            style={{ fontFamily: 'var(--font-baloo)', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}
+          >
+            Ayo Bersihkan Pantai! 🏖️
           </h1>
-          <p className="mb-4 text-center text-xl text-white drop-shadow-md md:text-2xl">
-            Seret sampah ke tong sampah yang sesuai!
+          <p
+            className="text-xs md:text-sm text-white drop-shadow-md"
+            style={{ fontFamily: 'var(--font-baloo)', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}
+          >
+            Geser sampah plastik ke keranjang!
           </p>
+        </motion.div>
 
-          <div className="mb-6 text-center">
-            <div className="inline-block rounded-2xl bg-white/90 px-6 py-3">
-              <p className="text-2xl font-bold text-cyan-700">
-                {cleanedCount}/{wasteItems.length} Sampah Dibersihkan
-              </p>
-            </div>
-          </div>
-
-          {/* Game Area */}
-          <div className="relative mx-auto aspect-video w-full max-w-5xl rounded-3xl bg-white/10 backdrop-blur-sm overflow-hidden">
-            {/* Background pantai */}
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage: "url('/assets/bg/pantai.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
+        {/* Progress */}
+        <motion.div
+          className="flex justify-center mb-2"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="bg-cyan-500 rounded-full px-4 py-1 shadow-lg">
+            <p
+              className="text-sm md:text-base font-bold text-white"
+              style={{ fontFamily: 'var(--font-baloo)' }}
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
-            </div>
-
-            {/* Sampah yang bisa di-drag */}
-            {wasteItems.map((item) => {
-              const isCleaned = cleanedItems.has(item.id);
-              const isDragging = draggedItem === item.id;
-
-              if (isCleaned) return null;
-
-              return (
-                <div
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, item.id)}
-                  onDragEnd={handleDragEnd}
-                  className={`absolute cursor-grab active:cursor-grabbing transition-all duration-200 ${
-                    isDragging ? 'opacity-50 scale-110 z-50' : 'opacity-100 hover:scale-105 z-20'
-                  } ${isCleaned ? 'opacity-0 pointer-events-none' : ''}`}
-                  style={{
-                    left: `${item.x}%`,
-                    top: `${item.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="rounded-full bg-white/90 p-3 shadow-lg border-2 border-red-400">
-                      <span className="text-4xl">{item.emoji}</span>
-                    </div>
-                    <span className="text-xs font-bold text-white drop-shadow-lg bg-black/50 px-2 py-1 rounded">
-                      {item.name}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Tong Sampah (Drop Zones) */}
-            {trashBins.map((bin) => {
-              const binItems = wasteItems.filter(
-                (item) => cleanedItems.has(item.id) && item.type === bin.type
-              );
-              const isFull = binItems.length > 0;
-
-              return (
-                <div
-                  key={bin.id}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, bin.type)}
-                  className={`absolute border-4 rounded-2xl transition-all duration-300 ${
-                    draggedItem
-                      ? wasteItems.find((w) => w.id === draggedItem)?.type === bin.type
-                        ? 'border-green-400 bg-green-500/30 scale-105'
-                        : 'border-yellow-400 bg-yellow-500/20'
-                      : 'border-gray-400 bg-gray-500/20'
-                  } flex flex-col items-center justify-center backdrop-blur-sm`}
-                  style={{
-                    left: `${bin.x - bin.width / 2}%`,
-                    top: `${bin.y - bin.height / 2}%`,
-                    width: `${bin.width}%`,
-                    height: `${bin.height}%`,
-                  }}
-                >
-                  <div className="text-center">
-                    <div className="text-4xl mb-1">{bin.emoji}</div>
-                    <div className="text-lg font-bold text-white drop-shadow-lg">
-                      {bin.label}
-                    </div>
-                    {isFull && (
-                      <div className="mt-1 text-xs text-white/80">
-                        ({binItems.length} item)
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Instruksi */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-blue-500/90 rounded-lg px-4 py-2">
-              <p className="text-sm font-semibold text-white text-center">
-                💡 Seret sampah ke tong sampah yang sesuai jenisnya!
-              </p>
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="mt-6 rounded-2xl bg-white/90 p-4">
-            <p className="mb-2 text-center text-lg font-bold text-gray-800">
-              Jenis Sampah:
+              {cleanedCount}/{trashItems.length} Sampah Dibersihkan
             </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🟢</span>
-                <span className="font-semibold">Organik: Sisa makanan, daun</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🔵</span>
-                <span className="font-semibold">Anorganik: Plastik, kaca</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🔴</span>
-                <span className="font-semibold">B3: Baterai, bahan berbahaya</span>
-              </div>
-            </div>
           </div>
+        </motion.div>
 
-          <div className="mt-6 text-center">
-            <Button onClick={() => router.push('/menu')} variant="secondary">
-              Kembali ke Menu
+        {/* Sampah berserakan di pantai - TANPA border dan bg */}
+        {trashItems.map((item, index) => {
+          const isCleaned = cleanedItems.has(item.id);
+          const isDragging = draggedItem === item.id;
+
+          if (isCleaned) return null;
+
+          return (
+            <motion.div
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, item.id)}
+              onDragEnd={handleDragEnd}
+              className={`absolute cursor-grab active:cursor-grabbing z-20 ${
+                isDragging ? 'opacity-60 scale-110' : 'hover:scale-110'
+              }`}
+              style={{
+                left: `${item.x}%`,
+                top: `${item.y}%`,
+                transform: `translate(-50%, -50%) rotate(${item.rotate}deg)`,
+              }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+              whileHover={{ scale: 1.15 }}
+            >
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={item.size}
+                height={item.size}
+                className="drop-shadow-lg"
+                style={{ 
+                  filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.4))',
+                }}
+                draggable={false}
+              />
+            </motion.div>
+          );
+        })}
+
+        {/* Keranjang Drop Zone */}
+        <motion.div
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          className={`absolute rounded-2xl transition-all z-30 ${
+            draggedItem
+              ? 'bg-green-400/40 ring-4 ring-green-400 scale-105'
+              : ''
+          }`}
+          style={{
+            right: '4%',
+            bottom: '8%',
+            width: '80px',
+            height: '90px',
+          }}
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <Image
+            src="/assets/items/keranjang.svg"
+            alt="Keranjang"
+            width={80}
+            height={90}
+            className="w-full h-full"
+            style={{ filter: 'drop-shadow(2px 4px 8px rgba(0,0,0,0.5))' }}
+          />
+          {cleanedCount > 0 && (
+            <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-lg">
+              {cleanedCount}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Si Lala - pojok kiri bawah */}
+        <motion.div
+          className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-30"
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <SiLala size={50} animate={false} />
+        </motion.div>
+
+        {/* Ikan berenang gembira */}
+        <AnimatePresence>
+          {showHappyFish && (
+            <>
+              {[...Array(3)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute text-4xl md:text-5xl z-20"
+                  initial={{ x: -100 }}
+                  animate={{ x: '120vw' }}
+                  transition={{
+                    duration: 3 + i,
+                    repeat: Infinity,
+                    ease: "linear",
+                    delay: i * 0.5,
+                  }}
+                  style={{ top: `${25 + i * 10}%` }}
+                >
+                  {['🐟', '🐠', '🐡'][i]}
+                </motion.div>
+              ))}
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Button - pojok kanan atas dengan spacing lebih longgar di mobile */}
+        <motion.div
+          className="absolute top-14 right-3 sm:top-16 sm:right-4 md:top-20 md:right-6 z-30"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          {gameComplete ? (
+            <Button onClick={() => router.push('/menu')} variant="primary">
+              🏠 SELESAI
             </Button>
-          </div>
-        </div>
+          ) : (
+            <Button onClick={() => router.push('/pantai')} variant="secondary">
+              ← Kembali
+            </Button>
+          )}
+        </motion.div>
       </div>
 
       <Toast
@@ -322,7 +283,7 @@ export default function PantaiGamePage() {
         type={toastType}
         isVisible={showToast}
         onClose={() => setShowToast(false)}
-        duration={2500}
+        duration={2000}
       />
     </div>
   );

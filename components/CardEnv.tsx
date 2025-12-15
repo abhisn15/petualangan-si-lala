@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { EnvironmentId } from '@/lib/types';
 import { getBadges } from '@/lib/storage';
 import { useEffect, useState } from 'react';
@@ -9,9 +10,10 @@ interface CardEnvProps {
   id: EnvironmentId;
   title: string;
   badgeName: string;
+  description?: string;
 }
 
-export default function CardEnv({ id, title, badgeName }: CardEnvProps) {
+export default function CardEnv({ id, title, badgeName, description }: CardEnvProps) {
   const [badgeStatus, setBadgeStatus] = useState<'LOCK' | 'DONE'>(() => {
     if (typeof window !== 'undefined') {
       const badges = getBadges();
@@ -44,38 +46,82 @@ export default function CardEnv({ id, title, badgeName }: CardEnvProps) {
     };
   }, [id]);
 
-  const getBgColor = () => {
+  const getBgImage = () => {
     switch (id) {
       case 'hutan':
-        return 'bg-gradient-to-br from-green-400 to-green-700';
+        return '/assets/bg/hutan.png';
       case 'taman':
-        return 'bg-gradient-to-br from-blue-400 to-blue-700';
+        return '/assets/bg/taman_kota.png';
       case 'pantai':
-        return 'bg-gradient-to-br from-cyan-400 to-cyan-700';
+        return '/assets/bg/pantai.png';
       default:
-        return 'bg-gradient-to-br from-gray-400 to-gray-700';
+        return '/assets/bg/hutan.png';
     }
   };
 
   return (
-    <Link href={`/${id}`} className="block">
-      <div
-        className={`relative h-64 w-full rounded-3xl ${getBgColor()} p-6 shadow-xl transition-transform hover:scale-105`}
+    <Link href={`/${id}`} className="block h-full w-full">
+      <motion.div
+        className="relative h-full w-full rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-white overflow-hidden flex flex-col"
+        whileHover={{ scale: 1.02, y: -3 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 300 }}
+        initial={{ scale: 1 }}
+        animate={{ scale: 1 }}
       >
-        <h3 className="mb-2 text-3xl font-bold text-white">{title}</h3>
-        <p className="mb-4 text-lg text-white/90">{badgeName}</p>
-        <div className="absolute bottom-6 right-6">
-          <div
-            className={`rounded-full px-6 py-2 text-lg font-bold ${
-              badgeStatus === 'DONE'
-                ? 'bg-yellow-400 text-yellow-900'
-                : 'bg-gray-300 text-gray-700'
-            }`}
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${getBgImage()}')` }}
+        />
+        {/* Overlay untuk kontras teks */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+        <div className="relative z-10 flex-1 flex flex-col justify-end p-6 md:p-8">
+          {/* Title */}
+          <h3
+            className="mb-2 text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg"
+            style={{ fontFamily: 'var(--font-baloo)' }}
           >
-            {badgeStatus === 'DONE' ? '✓ DONE' : '🔒 LOCK'}
-          </div>
+            {title}
+          </h3>
+          
+          {/* Badge Name */}
+          <p
+            className="mb-3 text-xl md:text-2xl text-white/95 font-semibold drop-shadow-md"
+            style={{ fontFamily: 'var(--font-baloo)' }}
+          >
+            {badgeName}
+          </p>
+          
+          {/* Description */}
+          {description && (
+            <p
+              className="text-base md:text-lg text-white/90 leading-relaxed drop-shadow-md mb-4"
+              style={{ fontFamily: 'var(--font-baloo)' }}
+            >
+              {description}
+            </p>
+          )}
+
+          {/* Badge Button */}
+          <motion.div
+            className="flex justify-end"
+            whileHover={{ scale: 1.1 }}
+          >
+            <div
+              className={`rounded-full px-5 py-2.5 md:px-6 md:py-3 text-base md:text-lg font-bold border-4 border-white shadow-lg ${
+                badgeStatus === 'DONE'
+                  ? 'bg-yellow-400 text-yellow-900'
+                  : 'bg-gray-300 text-gray-700'
+              }`}
+              style={{ fontFamily: 'var(--font-baloo)' }}
+            >
+              {badgeStatus === 'DONE' ? '✓ DONE 🏆' : '🔒 LOCK'}
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 }

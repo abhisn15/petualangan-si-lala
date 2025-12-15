@@ -8,19 +8,88 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-baloo);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Semua elemen menggunakan Baloo */
+* {
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
+  /* Pastikan body bisa scroll */
+  overflow-x: hidden;
+}
+
+/* Child-friendly text styles - semua menggunakan Baloo */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
+  font-weight: 700;
+}
+
+p, span, div, a, label, input, textarea, select {
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
+}
+
+button, .btn {
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
+}
+
+/* Landscape mobile support - hanya untuk laptop dan tablet */
+@media screen and (orientation: landscape) and (min-width: 768px) {
+  /* Ensure content fits in landscape untuk laptop/tablet */
+  html, body {
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+/* Mobile portrait - tidak pakai 100vh ketat, bisa scroll */
+@media screen and (max-width: 767px) {
+  html, body {
+    height: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* Smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Pastikan semua container bisa scroll */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Landscape mobile - perbaiki layout */
+@media screen and (orientation: landscape) and (max-width: 767px) {
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* Kurangi padding di landscape mobile */
+  .p-3 {
+    padding: 0.5rem;
+  }
+  
+  /* Header lebih compact */
+  h1 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Prevent zoom on input focus (iOS Safari) */
+input, textarea, select {
+  font-size: 16px !important;
+  font-family: var(--font-baloo), 'Comic Sans MS', cursive, sans-serif;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
 }

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120" width="80" height="120">
+  <!-- Botol Plastik Realistis -->
+  <defs>
+    <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8ED6F8;stop-opacity:0.9" />
+      <stop offset="50%" style="stop-color:#B8E8FC;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#7FCBF3;stop-opacity:0.9" />
+    </linearGradient>
+    <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1E88E5" />
+      <stop offset="100%" style="stop-color:#1565C0" />
+    </linearGradient>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4FC3F7;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#0288D1;stop-opacity:0.5" />
+    </linearGradient>
+  </defs>
+  <!-- Tutup botol -->
+  <rect x="30" y="5" width="20" height="15" rx="3" fill="url(#capGrad)"/>
+  <rect x="32" y="2" width="16" height="5" rx="2" fill="#1976D2"/>
+  <!-- Leher botol -->
+  <path d="M32 20 L32 35 Q25 40 25 50 L25 110 Q25 115 30 115 L50 115 Q55 115 55 110 L55 50 Q55 40 48 35 L48 20 Z" fill="url(#bottleGrad)" stroke="#64B5F6" stroke-width="1"/>
+  <!-- Air di dalam -->
+  <path d="M28 60 L28 108 Q28 112 32 112 L48 112 Q52 112 52 108 L52 60 Q40 65 28 60 Z" fill="url(#waterGrad)"/>
+  <!-- Label -->
+  <rect x="28" y="70" width="24" height="25" rx="2" fill="#FFFFFF" opacity="0.9"/>
+  <text x="40" y="86" font-size="8" fill="#0277BD" text-anchor="middle" font-weight="bold">AQUA</text>
+  <!-- Refleksi -->
+  <path d="M30 45 L30 100" stroke="white" stroke-width="2" opacity="0.4"/>
+</svg>
+

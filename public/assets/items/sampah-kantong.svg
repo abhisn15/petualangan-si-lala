@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 100" width="90" height="100">
+  <!-- Kantong Plastik Kusut Realistis -->
+  <defs>
+    <linearGradient id="plasticGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5F5F5;stop-opacity:0.85" />
+      <stop offset="50%" style="stop-color:#E0E0E0;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#BDBDBD;stop-opacity:0.85" />
+    </linearGradient>
+  </defs>
+  <!-- Kantong utama -->
+  <path d="M20 25 Q15 20 20 15 L30 10 Q45 5 60 10 L70 15 Q75 20 70 25 
+           L72 75 Q73 85 65 90 L55 95 Q45 98 35 95 L25 90 Q17 85 18 75 Z" 
+        fill="url(#plasticGrad)" stroke="#9E9E9E" stroke-width="1"/>
+  <!-- Lipatan/kusut -->
+  <path d="M25 30 Q35 35 30 50 Q25 65 35 75" stroke="#BDBDBD" stroke-width="2" fill="none"/>
+  <path d="M55 25 Q60 40 50 55 Q45 70 55 80" stroke="#BDBDBD" stroke-width="2" fill="none"/>
+  <path d="M40 20 Q45 35 40 50" stroke="#BDBDBD" stroke-width="1.5" fill="none"/>
+  <!-- Handle/pegangan -->
+  <ellipse cx="30" cy="12" rx="8" ry="5" fill="#E8E8E8" stroke="#BDBDBD"/>
+  <ellipse cx="60" cy="12" rx="8" ry="5" fill="#E8E8E8" stroke="#BDBDBD"/>
+  <!-- Bayangan dalam -->
+  <ellipse cx="45" cy="60" rx="15" ry="20" fill="#9E9E9E" opacity="0.2"/>
+</svg>
+

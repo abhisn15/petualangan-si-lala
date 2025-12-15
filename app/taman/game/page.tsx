@@ -2,122 +2,305 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
 import Button from '@/components/Button';
 import Toast from '@/components/Toast';
+import SiLala from '@/app/components/SiLala';
+import LandscapePrompt from '@/components/LandscapePrompt';
+import SoundManager from '@/components/SoundManager';
 import { updateBadge } from '@/lib/storage';
+
+type WasteType = 'organik' | 'plastik' | 'kertas';
+
+interface WasteItem {
+  id: number;
+  name: string;
+  type: WasteType;
+  image: string;
+  x: number;
+  y: number;
+  rotate: number;
+}
+
+interface TrashBin {
+  id: string;
+  type: WasteType;
+  label: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export default function TamanGamePage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [sortedItems, setSortedItems] = useState<Set<number>>(new Set());
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [gameComplete, setGameComplete] = useState(false);
 
-  const steps = [
-    {
-      question: 'Pilah sampah: Botol plastik termasuk sampah apa?',
-      options: ['Organik', 'Anorganik', 'B3'],
-      correct: 1,
-    },
-    {
-      question: 'Pilah sampah: Sisa makanan termasuk sampah apa?',
-      options: ['Organik', 'Anorganik', 'B3'],
-      correct: 0,
-    },
-    {
-      question: 'Pilah sampah: Baterai bekas termasuk sampah apa?',
-      options: ['Organik', 'Anorganik', 'B3'],
-      correct: 2,
-    },
+  // Sampah tersebar realistis di lantai kayu - dari kiri ke kanan
+  const wasteItems: WasteItem[] = [
+    { id: 1, name: 'Daun Kering', type: 'organik', image: '/assets/items/sampah-daun.svg', x: 8, y: 72, rotate: 15 },
+    { id: 2, name: 'Botol Plastik', type: 'plastik', image: '/assets/items/sampah-botol.svg', x: 48, y: 85, rotate: -25 },
+    { id: 3, name: 'Kertas Bekas', type: 'kertas', image: '/assets/items/sampah-kertas.svg', x: 55, y: 55, rotate: 10 },
+    { id: 4, name: 'Kulit Pisang', type: 'organik', image: '/assets/items/sampah-pisang.svg', x: 62, y: 78, rotate: -8 },
+    { id: 5, name: 'Kaleng Bekas', type: 'plastik', image: '/assets/items/sampah-kaleng.svg', x: 78, y: 88, rotate: 35 },
+    { id: 6, name: 'Kantong Plastik', type: 'plastik', image: '/assets/items/sampah-kantong.svg', x: 92, y: 75, rotate: -15 },
   ];
 
-  const handleAnswer = (answerIndex: number) => {
-    const step = steps[currentStep];
-    if (answerIndex === step.correct) {
-      setToastMessage('Benar! ✓');
+  // Drop zone - posisi sudah disesuaikan dengan tong sampah di gambar
+  const trashBins: TrashBin[] = [
+    { id: 'kertas', type: 'kertas', label: 'Kertas (Biru)', x: 11.5, y: 90, w: 7, h: 20 },
+    { id: 'plastik', type: 'plastik', label: 'Plastik (Kuning)', x: 23.8, y: 90, w: 7, h: 20 },
+    { id: 'organik', type: 'organik', label: 'Organik (Hijau)', x: 36.5, y: 90, w: 7, h: 20 },
+  ];
+
+  const handleDragStart = (e: React.DragEvent, itemId: number) => {
+    if (sortedItems.has(itemId)) {
+      e.preventDefault();
+      return;
+    }
+    setDraggedItem(itemId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', itemId.toString());
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, binType: WasteType) => {
+    e.preventDefault();
+
+    if (!draggedItem) return;
+
+    const wasteItem = wasteItems.find((item) => item.id === draggedItem);
+    if (!wasteItem) return;
+
+    if (wasteItem.type === binType) {
+      setSortedItems((prev) => new Set([...prev, draggedItem]));
+      const newCount = sortedItems.size + 1;
+
+      setToastMessage('Benar! Kamu pintar! 🎉');
       setToastType('success');
       setShowToast(true);
 
-      if (currentStep === steps.length - 1) {
+      if (newCount === wasteItems.length) {
+        setGameComplete(true);
         setTimeout(() => {
           updateBadge('taman', true);
-          setToastMessage('Selamat! Kamu mendapatkan lencana "Penjaga Taman"!');
+          setToastMessage('Kamu berhasil memilah semua sampah! Taman jadi bersih! 🏆');
+          setToastType('success');
           setShowToast(true);
-          setTimeout(() => {
-            router.push('/menu');
-          }, 2000);
-        }, 1000);
-      } else {
-        setTimeout(() => {
-          setCurrentStep((prev) => prev + 1);
         }, 1000);
       }
     } else {
-      setToastMessage('Salah, coba lagi!');
+      setToastMessage('Ups! Coba lagi ya! ❌');
       setToastType('error');
       setShowToast(true);
     }
+
+    setDraggedItem(null);
   };
 
-  if (currentStep >= steps.length) {
-    return null;
-  }
-
-  const step = steps[currentStep];
+  const sortedCount = sortedItems.size;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="fixed inset-0 overflow-hidden">
+      {/* Sound */}
+      <SoundManager src="/assets/sound/Game taman.mp3" loop={true} volume={0.4} />
+
+      {/* Landscape Prompt for Mobile */}
+      <LandscapePrompt />
+
+      {/* Full Screen Background with aspect ratio maintained */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('/assets/bg/taman.png')",
+          backgroundImage: "url('/assets/bg/taman_kota.png')",
+          // Ensure background covers properly in landscape
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
         }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/60" />
-      </div>
+      />
 
-      <div className="relative z-10 min-h-screen p-8">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="mb-4 text-center text-5xl font-bold text-white drop-shadow-lg md:text-6xl">
-            Game Taman
+      {/* Content */}
+      <div className="relative z-10 h-full w-full">
+        {/* Header */}
+        <motion.div
+          className="absolute top-2 left-0 right-0 text-center z-30"
+          initial={{ y: -30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white"
+            style={{ fontFamily: 'var(--font-baloo)', textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}
+          >
+            Ayo Pilah Sampah! 🗑️
           </h1>
-          <p className="mb-8 text-center text-2xl text-white drop-shadow-md">
-            Pilah sampah dengan benar!
+          <p
+            className="text-[10px] sm:text-xs md:text-sm text-white"
+            style={{ fontFamily: 'var(--font-baloo)', textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}
+          >
+            Seret sampah ke tempat sampah yang sesuai!
           </p>
+        </motion.div>
 
-          <div className="mb-8 text-center">
-            <div className="inline-block rounded-2xl bg-white/90 px-8 py-4">
-              <p className="text-3xl font-bold text-blue-700">
-                Langkah {currentStep + 1}/3
-              </p>
-            </div>
+        {/* Progress */}
+        <motion.div
+          className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-30"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="bg-green-500 rounded-full px-3 sm:px-4 py-1 shadow-lg">
+            <p
+              className="text-xs sm:text-sm md:text-base font-bold text-white"
+              style={{ fontFamily: 'var(--font-baloo)' }}
+            >
+              {sortedCount}/{wasteItems.length} Sampah Dipilah
+            </p>
           </div>
+        </motion.div>
 
-          <div className="mx-auto max-w-2xl rounded-3xl bg-white/95 p-8 shadow-2xl">
-            <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
-              {step.question}
-            </h2>
-            <div className="flex flex-col gap-4">
-              {step.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(index)}
-                  className="rounded-2xl bg-blue-500 px-6 py-4 text-xl font-bold text-white transition-all hover:bg-blue-600 hover:shadow-lg"
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Sampah - ukuran responsive menggunakan vw */}
+        {wasteItems.map((item, index) => {
+          const isSorted = sortedItems.has(item.id);
+          const isDragging = draggedItem === item.id;
 
-          <div className="mt-8 text-center">
-            <Button onClick={() => router.push('/menu')} variant="secondary">
-              Kembali ke Menu
-            </Button>
+          if (isSorted) return null;
+
+          return (
+            <motion.div
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
+              onDragEnd={handleDragEnd}
+              className={`absolute cursor-grab active:cursor-grabbing z-20 ${isDragging ? 'opacity-60 scale-110' : 'hover:scale-110'}`}
+              style={{
+                left: `${item.x}%`,
+                top: `${item.y}%`,
+                transform: `translate(-50%, -50%) rotate(${item.rotate}deg)`,
+                // Ukuran responsive: lebih kecil di mobile portrait, lebih besar di landscape/desktop
+                width: 'clamp(28px, 3.5vw, 55px)',
+                height: 'clamp(28px, 3.5vw, 55px)',
+              }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+              whileHover={{ scale: 1.15 }}
+            >
+              <Image
+                src={item.image}
+                alt={item.name}
+                fill
+                className="object-contain drop-shadow-lg"
+                style={{
+                  filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.4))',
+                }}
+                draggable={false}
+              />
+            </motion.div>
+          );
+        })}
+
+        {/* Drop Zones - responsive dengan vw/vh */}
+        {trashBins.map((bin) => {
+          const isCorrectBin = draggedItem
+            ? wasteItems.find((w) => w.id === draggedItem)?.type === bin.type
+            : false;
+
+          return (
+            <motion.div
+              key={bin.id}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, bin.type)}
+              className={`absolute rounded-lg transition-all z-10 ${
+                draggedItem
+                  ? isCorrectBin
+                    ? 'bg-green-400/50 ring-4 ring-green-400'
+                    : 'bg-white/20 ring-2 ring-white/40'
+                  : ''
+              }`}
+              style={{
+                left: `${bin.x}%`,
+                top: `${bin.y}%`,
+                width: `${bin.w}%`,
+                height: `${bin.h}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            />
+          );
+        })}
+
+        {/* Si Lala - responsive position */}
+        <motion.div
+          className="absolute z-30"
+          style={{
+            bottom: '22%',
+            left: '1%',
+          }}
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12">
+            <SiLala size={48} animate={false} />
           </div>
+        </motion.div>
+
+        {/* Legend - responsive */}
+        <div 
+          className="absolute left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 flex gap-2 sm:gap-3 z-30"
+          style={{ bottom: '1%' }}
+        >
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></span>
+            <span className="text-white font-semibold text-[8px] sm:text-[10px] md:text-xs" style={{ fontFamily: 'var(--font-baloo)' }}>Organik</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 bg-yellow-400 rounded-full"></span>
+            <span className="text-white font-semibold text-[8px] sm:text-[10px] md:text-xs" style={{ fontFamily: 'var(--font-baloo)' }}>Plastik</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full"></span>
+            <span className="text-white font-semibold text-[8px] sm:text-[10px] md:text-xs" style={{ fontFamily: 'var(--font-baloo)' }}>Kertas</span>
+          </span>
         </div>
+
+        {/* Button - responsive position dengan spacing lebih longgar di mobile */}
+        <motion.div
+          className="absolute z-30"
+          style={{
+            bottom: 'clamp(8px, 1.5vh, 16px)',
+            right: 'clamp(8px, 1.5vw, 16px)',
+          }}
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          {gameComplete ? (
+            <Button onClick={() => router.push('/menu')} variant="primary">
+              🏠 SELESAI
+            </Button>
+          ) : (
+            <Button onClick={() => router.push('/taman')} variant="secondary">
+              ← Kembali
+            </Button>
+          )}
+        </motion.div>
       </div>
 
       <Toast
@@ -125,8 +308,8 @@ export default function TamanGamePage() {
         type={toastType}
         isVisible={showToast}
         onClose={() => setShowToast(false)}
+        duration={2000}
       />
     </div>
   );
 }
-

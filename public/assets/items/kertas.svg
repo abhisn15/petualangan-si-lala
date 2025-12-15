@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Kertas Kusut -->
+  <path d="M12 16 L48 12 Q52 14 52 18 L54 50 Q52 54 48 54 L16 56 Q12 54 12 50 Z" fill="#FFECB3"/>
+  <path d="M16 20 L40 18 M16 28 L44 26 M16 36 L38 34 M16 44 L42 42" stroke="#FFB74D" stroke-width="1.5"/>
+  <path d="M48 12 L44 20 L52 18" fill="#FFF9C4"/>
+</svg>
+

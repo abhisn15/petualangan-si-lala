@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Daun Kering -->
+  <path d="M12 44 Q8 36 16 24 Q24 12 40 10 Q52 10 54 20 Q56 32 48 42 Q40 52 28 54 Q16 54 12 44 Z" fill="#8D6E63"/>
+  <path d="M40 10 Q32 24 28 54" stroke="#6D4C41" stroke-width="2" fill="none"/>
+  <path d="M24 20 L32 28 M36 16 L38 26 M20 32 L30 36 M22 44 L32 44" stroke="#6D4C41" stroke-width="1" fill="none"/>
+</svg>
+

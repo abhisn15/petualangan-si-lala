@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Kulit Pisang -->
+  <path d="M20 48 Q16 44 18 38 L24 20 Q28 12 34 14 Q40 16 44 24 L48 40 Q50 46 46 50 Q40 54 32 52 Q24 52 20 48 Z" fill="#FDD835"/>
+  <path d="M24 20 Q30 18 34 14" stroke="#F9A825" stroke-width="2" fill="none"/>
+  <path d="M28 24 L30 44 M36 22 L38 42" stroke="#F9A825" stroke-width="1.5" fill="none"/>
+  <ellipse cx="26" cy="46" rx="4" ry="3" fill="#8D6E63"/>
+</svg>
+

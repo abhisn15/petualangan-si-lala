@@ -35,18 +35,18 @@ export default function Toast({
   };
 
   return (
-    <div className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 transform animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-4 sm:bottom-6 md:bottom-8 left-1/2 z-50 -translate-x-1/2 transform animate-in fade-in slide-in-from-bottom-4 duration-300 px-3 w-full max-w-sm sm:max-w-md">
       <div
-        className={`rounded-2xl px-8 py-4 text-xl font-bold shadow-2xl ${typeClasses[type]} transition-all`}
+        className={`rounded-xl sm:rounded-2xl px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 text-sm sm:text-base md:text-lg font-bold shadow-2xl ${typeClasses[type]} transition-all`}
+        style={{ fontFamily: 'var(--font-baloo)' }}
       >
-        <div className="flex items-center gap-2">
-          {type === 'success' && <span className="text-2xl">🎉</span>}
-          {type === 'error' && <span className="text-2xl">⚠️</span>}
-          {type === 'info' && <span className="text-2xl">ℹ️</span>}
+        <div className="flex items-center justify-center gap-2">
+          {type === 'success' && <span className="text-lg sm:text-xl md:text-2xl">🎉</span>}
+          {type === 'error' && <span className="text-lg sm:text-xl md:text-2xl">⚠️</span>}
+          {type === 'info' && <span className="text-lg sm:text-xl md:text-2xl">ℹ️</span>}
           <span>{message}</span>
         </div>
       </div>
     </div>
   );
 }
-
