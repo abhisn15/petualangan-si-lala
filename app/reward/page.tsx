@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Button from '@/components/Button';
 import SiLala from '@/app/components/SiLala';
 import { getBadges } from '@/lib/storage';
+import { Badges } from '@/lib/types';
 
 interface Badge {
   id: string;
@@ -16,7 +17,7 @@ interface Badge {
 
 export default function RewardPage() {
   const router = useRouter();
-  const [badges, setBadges] = useState<Record<string, boolean>>({});
+  const [badges, setBadges] = useState<Badges>({ hutan: false, taman: false, pantai: false });
   const [mounted, setMounted] = useState(false);
 
   const allBadges: Badge[] = [
@@ -30,7 +31,7 @@ export default function RewardPage() {
     setBadges(getBadges());
   }, []);
 
-  const earnedBadges = allBadges.filter(badge => badges[badge.id]);
+  const earnedBadges = allBadges.filter(badge => badges[badge.id as keyof Badges]);
   const allComplete = earnedBadges.length === allBadges.length;
 
   if (!mounted) {
@@ -120,7 +121,7 @@ export default function RewardPage() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           {allBadges.map((badge, index) => {
-            const isEarned = badges[badge.id];
+            const isEarned = badges[badge.id as keyof Badges];
             
             return (
               <motion.div

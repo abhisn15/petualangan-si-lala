@@ -40,8 +40,8 @@ export default function LandscapePrompt() {
   const handleRotateClick = async () => {
     // Try to lock orientation (may not work on all browsers)
     try {
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
+      if (screen.orientation && 'lock' in screen.orientation) {
+        await (screen.orientation as any).lock('landscape');
       }
     } catch (err) {
       console.log('Orientation lock not supported or failed');

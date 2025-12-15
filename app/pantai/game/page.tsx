@@ -160,7 +160,7 @@ export default function PantaiGamePage() {
             <motion.div
               key={item.id}
               draggable
-              onDragStart={(e) => handleDragStart(e, item.id)}
+              onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
               onDragEnd={handleDragEnd}
               className={`absolute cursor-grab active:cursor-grabbing z-20 ${
                 isDragging ? 'opacity-60 scale-110' : 'hover:scale-110'
