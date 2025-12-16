@@ -11,7 +11,7 @@ const baloo = Baloo_2({
 });
 
 export const metadata: Metadata = {
-  title: "Petualangan Lingkungan Si Lala",
+  title: "Mari Jaga Bumi",
   description: "Aplikasi edukasi interaktif untuk belajar tentang lingkungan",
   icons: {
     icon: [

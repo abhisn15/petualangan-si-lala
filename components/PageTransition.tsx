@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { stopAllSounds } from '@/components/SoundManager';
+import { stopRewardSound } from '@/lib/soundEffects';
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -16,6 +17,11 @@ export default function PageTransition({ children }: PageTransitionProps) {
   useEffect(() => {
     // Hanya stop jika pathname benar-benar berubah (bukan initial mount)
     if (prevPathnameRef.current !== null && prevPathnameRef.current !== pathname) {
+      // Stop reward sound jika keluar dari halaman reward
+      if (prevPathnameRef.current === '/reward') {
+        stopRewardSound();
+      }
+      
       // Stop semua sounds dengan delay kecil untuk memastikan component baru sudah mount
       const timer = setTimeout(() => {
         stopAllSounds();

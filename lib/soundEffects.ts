@@ -79,18 +79,56 @@ export const playCelebrationSound = () => {
   });
 };
 
+// Global reward sound instance untuk tracking dan control
+let rewardSoundInstance: HTMLAudioElement | null = null;
+
 // Play reward sound from MP3 file
 export const playRewardSound = () => {
   if (typeof window === 'undefined') return;
   
+  // Stop sound reward yang sedang berjalan jika ada
+  stopRewardSound();
+  
   try {
     const audio = new Audio('/assets/sound/reward.mp3');
     audio.volume = 0.6;
+    audio.loop = false; // Reward sound tidak loop
+    rewardSoundInstance = audio;
+    
     audio.play().catch((error) => {
       console.log('Reward sound play failed:', error);
+      rewardSoundInstance = null;
+    });
+    
+    // Cleanup saat audio selesai
+    audio.addEventListener('ended', () => {
+      rewardSoundInstance = null;
     });
   } catch (error) {
     console.log('Reward sound not available:', error);
+    rewardSoundInstance = null;
+  }
+};
+
+// Stop reward sound - lebih agresif untuk memastikan sound benar-benar dimatikan
+export const stopRewardSound = () => {
+  if (rewardSoundInstance) {
+    try {
+      // Pause audio
+      rewardSoundInstance.pause();
+      // Reset current time
+      rewardSoundInstance.currentTime = 0;
+      // Remove all event listeners
+      rewardSoundInstance.removeEventListener('ended', () => {});
+      // Clear src untuk memastikan audio tidak bisa diputar lagi
+      rewardSoundInstance.src = '';
+      rewardSoundInstance.load(); // Reload untuk memastikan
+      // Clear reference
+      rewardSoundInstance = null;
+    } catch (error) {
+      console.log('Error stopping reward sound:', error);
+      rewardSoundInstance = null;
+    }
   }
 };
 

@@ -59,7 +59,7 @@ export default function TentangPage() {
               transition={{ duration: 0.6, delay: 0.4 }}
               style={{ fontFamily: 'var(--font-baloo)' }}
             >
-              Tentang Petualangan Lingkungan Si Lala
+              Tentang Mari Jaga Bumi
             </motion.h2>
           </div>
 
@@ -72,7 +72,7 @@ export default function TentangPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <strong className="text-green-700">Petualangan Lingkungan Si Lala</strong> adalah
+              <strong className="text-green-700">Mari Jaga Bumi</strong> adalah
               platform edukasi interaktif yang dirancang khusus untuk anak-anak
               agar belajar tentang alam dan lingkungan dengan cara yang menyenangkan!
             </motion.p>

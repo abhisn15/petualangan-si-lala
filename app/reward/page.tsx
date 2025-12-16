@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import Confetti from 'react-confetti';
@@ -9,7 +9,7 @@ import Button from '@/components/Button';
 import SiLala from '@/app/components/SiLala';
 import { getBadges } from '@/lib/storage';
 import { Badges } from '@/lib/types';
-import { playRewardSound } from '@/lib/soundEffects';
+import { playRewardSound, stopRewardSound } from '@/lib/soundEffects';
 
 interface Badge {
   id: string;
@@ -20,6 +20,7 @@ interface Badge {
 
 export default function RewardPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [badges, setBadges] = useState<Badges>({ hutan: false, taman: false, pantai: false });
   const [mounted, setMounted] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
@@ -38,12 +39,29 @@ export default function RewardPage() {
     { id: 'pantai', name: 'Sahabat Laut', emoji: '🌊', color: 'from-cyan-400 to-blue-600' },
   ];
 
+  // Effect untuk play sound saat mount dan stop saat unmount
   useEffect(() => {
     setMounted(true);
     setBadges(getBadges());
+    
     // Play reward sound saat halaman reward dibuka
-    playRewardSound();
-  }, []);
+    if (pathname === '/reward') {
+      playRewardSound();
+    }
+    
+    // Cleanup: stop reward sound saat keluar dari halaman
+    return () => {
+      stopRewardSound();
+    };
+  }, [pathname]);
+  
+  // Effect tambahan untuk memastikan sound dimatikan saat pathname berubah
+  useEffect(() => {
+    // Jika pathname bukan /reward, pastikan sound dimatikan
+    if (pathname !== '/reward') {
+      stopRewardSound();
+    }
+  }, [pathname]);
 
   // GSAP animation untuk glassmorphism effect dan transisi masuk
   useEffect(() => {
@@ -301,7 +319,10 @@ export default function RewardPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 1 }}
         >
-          <Button onClick={() => router.push('/menu')} variant="primary">
+          <Button onClick={() => {
+            stopRewardSound();
+            router.push('/menu');
+          }} variant="primary">
             🏠 KEMBALI KE MENU
           </Button>
         </motion.div>
