@@ -104,7 +104,16 @@ export default function HutanGuessPosition() {
   return (
     <div className="fixed inset-0 overflow-hidden">
       {/* Sound */}
-      <SoundManager src="/assets/sound/Game hutan.mp3" loop={true} volume={0.4} />
+      {!gameComplete && (
+        <SoundManager 
+          soundKey="hutan-game-sound" 
+          src="/assets/sound/Game hutan.mp3" 
+          loop={true} 
+          volume={0.4} 
+          autoPlay={true}
+          playOnInteraction={true}
+        />
+      )}
 
       {/* Landscape Prompt for Mobile */}
       <LandscapePrompt />

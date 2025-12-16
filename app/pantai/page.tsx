@@ -84,7 +84,14 @@ export default function PantaiPage() {
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Sound */}
-      <SoundManager src="/assets/sound/Modul pantai.mp3" loop={true} volume={0.4} />
+      <SoundManager 
+        soundKey="pantai-explore-sound" 
+        src="/assets/sound/Modul pantai.mp3" 
+        loop={true} 
+        volume={0.4} 
+        autoPlay={true}
+        playOnInteraction={true}
+      />
 
       {/* Landscape Prompt for Mobile */}
       <LandscapePrompt />
@@ -101,7 +108,7 @@ export default function PantaiPage() {
       <div className="fixed inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/10 pointer-events-none" />
 
       {/* Content Layer - Bisa di-scroll di mobile */}
-      <div className="relative z-10 min-h-full w-full flex flex-col">
+      <div className="relative z-10 h-screen w-full flex flex-col">
         {/* Header - Compact - Fixed di top */}
         <motion.div
           className="flex items-center justify-center gap-2 sm:gap-3 p-3 md:p-4 flex-shrink-0 bg-gradient-to-b from-black/20 to-transparent"

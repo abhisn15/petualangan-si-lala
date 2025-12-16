@@ -33,6 +33,7 @@ export default function MenuPage() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-cyan-50 overflow-y-auto">
       {/* Sound Opening - Background Music di Menu */}
       <SoundManager 
+        soundKey="menu-sound" 
         src="/assets/sound/Opening.mp3" 
         loop={true} 
         volume={0.5} 

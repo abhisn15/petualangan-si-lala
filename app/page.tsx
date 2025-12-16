@@ -37,7 +37,7 @@ export default function Home() {
     >
       {/* Sound Opening - Background Music - Lanjutkan dari splash screen */}
       <SoundManager 
-        key="home-sound" 
+        soundKey="home-sound" 
         src="/assets/sound/Opening.mp3" 
         loop={true} 
         volume={0.6} 

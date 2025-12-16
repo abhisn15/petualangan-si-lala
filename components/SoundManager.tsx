@@ -1,13 +1,35 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface SoundManagerProps {
   src: string;
   loop?: boolean;
   volume?: number;
   autoPlay?: boolean;
-  playOnInteraction?: boolean; // Play setelah user interaction
+  playOnInteraction?: boolean;
+  soundKey?: string; // Unique key untuk prevent duplicate instances (bukan 'key' karena itu prop khusus React)
+}
+
+// Global sound registry untuk mencegah multiple instances dan track semua sounds
+const soundRegistry = new Map<string, HTMLAudioElement>();
+let currentPlayingKey: string | null = null;
+
+// Function untuk stop semua sounds kecuali yang diizinkan
+export function stopAllSounds(exceptKey?: string) {
+  soundRegistry.forEach((audio, key) => {
+    if (key !== exceptKey) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (error) {
+        console.log('Error stopping sound:', error);
+      }
+    }
+  });
+  if (!exceptKey) {
+    currentPlayingKey = null;
+  }
 }
 
 export default function SoundManager({ 
@@ -15,75 +37,127 @@ export default function SoundManager({
   loop = true, 
   volume = 0.5,
   autoPlay = true,
-  playOnInteraction = true
+  playOnInteraction = true,
+  soundKey
 }: SoundManagerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const hasTriedPlayRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const uniqueKey = soundKey || src;
 
   useEffect(() => {
     if (!src || typeof window === 'undefined') return;
 
+    isMountedRef.current = true;
+
+    // Stop semua sounds lain sebelum memulai yang baru
+    stopAllSounds(uniqueKey);
+
+    // Hapus instance lama jika ada dengan key yang sama
+    const existingAudio = soundRegistry.get(uniqueKey);
+    if (existingAudio) {
+      try {
+        existingAudio.pause();
+        existingAudio.currentTime = 0;
+        existingAudio.src = '';
+        soundRegistry.delete(uniqueKey);
+      } catch (error) {
+        console.log('SoundManager: Error cleaning up existing audio:', error);
+      }
+    }
+
     // Create audio element
     const audio = new Audio(src);
     audio.loop = loop;
-    audio.volume = volume;
+    audio.volume = Math.max(0, Math.min(1, volume));
+    audio.preload = 'auto';
+    
+    // Error handling
+    audio.addEventListener('error', (e) => {
+      console.error('SoundManager: Audio error:', e);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+      if (currentPlayingKey === uniqueKey) {
+        currentPlayingKey = null;
+      }
+    });
+
+    // Handle audio ended (untuk non-loop)
+    audio.addEventListener('ended', () => {
+      if (!loop && audioRef.current) {
+        audioRef.current.currentTime = 0;
+      }
+      if (currentPlayingKey === uniqueKey) {
+        currentPlayingKey = null;
+      }
+    });
+
     audioRef.current = audio;
+    soundRegistry.set(uniqueKey, audio);
 
     // Function untuk play audio
-    const playAudio = () => {
-      if (!audioRef.current) {
-        console.log('SoundManager: Audio element not ready');
+    const playAudio = async () => {
+      if (!audioRef.current || !isMountedRef.current) {
         return;
       }
       
+      // Pastikan tidak ada sound lain yang sedang play
+      if (currentPlayingKey && currentPlayingKey !== uniqueKey) {
+        stopAllSounds(uniqueKey);
+      }
+      
       if (hasTriedPlayRef.current) {
-        console.log('SoundManager: Already tried to play');
         return;
       }
       
       hasTriedPlayRef.current = true;
-      console.log('SoundManager: Attempting to play', src);
       
-      const playPromise = audioRef.current.play().catch((error) => {
-        console.log('SoundManager: Audio play prevented:', error);
+      try {
+        await audioRef.current.play();
+        console.log('SoundManager: Audio playing successfully', src);
+        currentPlayingKey = uniqueKey;
+      } catch (error: any) {
+        console.log('SoundManager: Audio play prevented:', error?.message || error);
         hasTriedPlayRef.current = false; // Reset jika gagal
-        return null;
-      });
-      
-      if (playPromise) {
-        playPromise.then(() => {
-          console.log('SoundManager: Audio playing successfully');
-          setIsPlaying(true);
-        }).catch((err) => {
-          console.log('SoundManager: Audio play error:', err);
-          hasTriedPlayRef.current = false; // Reset jika error
-        });
+        
+        // Jika autoplay gagal, coba lagi setelah user interaction
+        if (playOnInteraction && error?.name !== 'AbortError') {
+          const handleInteraction = () => {
+            if (audioRef.current && isMountedRef.current && !hasTriedPlayRef.current) {
+              playAudio();
+            }
+          };
+
+          document.addEventListener('click', handleInteraction, { once: true });
+          document.addEventListener('touchstart', handleInteraction, { once: true });
+          document.addEventListener('keydown', handleInteraction, { once: true });
+        }
       }
     };
 
     // Auto play jika diizinkan
     if (autoPlay) {
-      // Coba play langsung setelah sedikit delay untuk memastikan audio element siap
+      // Delay sedikit untuk memastikan audio element siap dan stop sounds lain dulu
       const playTimer = setTimeout(() => {
-        playAudio();
-      }, 100);
+        if (isMountedRef.current) {
+          playAudio();
+        }
+      }, 300); // Delay lebih lama untuk memastikan sounds lain sudah stop
 
-      // Cleanup timer
       return () => {
         clearTimeout(playTimer);
       };
     }
 
-    // Jika autoplay gagal atau playOnInteraction true, play setelah user interaction
-    if (playOnInteraction) {
+    // Jika playOnInteraction true tapi autoPlay false
+    if (playOnInteraction && !autoPlay) {
       const handleInteraction = () => {
-        if (audioRef.current && !isPlaying && !hasTriedPlayRef.current) {
+        if (audioRef.current && isMountedRef.current && !hasTriedPlayRef.current) {
           playAudio();
         }
       };
 
-      // Event listeners untuk user interaction
       document.addEventListener('click', handleInteraction, { once: true });
       document.addEventListener('touchstart', handleInteraction, { once: true });
       document.addEventListener('keydown', handleInteraction, { once: true });
@@ -95,31 +169,49 @@ export default function SoundManager({
       };
     }
 
-    // Cleanup
+    // Cleanup function - PASTIKAN sound berhenti saat unmount
     return () => {
+      isMountedRef.current = false;
+      
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current.src = '';
+          audioRef.current.load(); // Reset audio element
+        } catch (error) {
+          console.log('SoundManager: Error during cleanup:', error);
+        }
+        
+        // Hapus dari registry
+        if (soundRegistry.get(uniqueKey) === audioRef.current) {
+          soundRegistry.delete(uniqueKey);
+        }
+        
+        if (currentPlayingKey === uniqueKey) {
+          currentPlayingKey = null;
+        }
+        
         audioRef.current = null;
       }
+      
       hasTriedPlayRef.current = false;
     };
-  }, [src, loop, volume, autoPlay, playOnInteraction]);
+  }, [src, loop, volume, autoPlay, playOnInteraction, uniqueKey]);
 
   // Update volume saat berubah
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
+    if (audioRef.current && isMountedRef.current) {
+      audioRef.current.volume = Math.max(0, Math.min(1, volume));
     }
   }, [volume]);
 
   // Update loop saat berubah
   useEffect(() => {
-    if (audioRef.current) {
+    if (audioRef.current && isMountedRef.current) {
       audioRef.current.loop = loop;
     }
   }, [loop]);
 
   return null; // Component tidak render apapun
 }
-

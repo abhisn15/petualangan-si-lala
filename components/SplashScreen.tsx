@@ -54,6 +54,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         >
           {/* Sound untuk splash - mulai dari sini */}
           <SoundManager 
+            soundKey="splash-sound" 
             src="/assets/sound/Opening.mp3" 
             loop={true} 
             volume={0.6} 

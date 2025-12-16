@@ -102,7 +102,14 @@ export default function TamanPage() {
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Sound */}
-      <SoundManager src="/assets/sound/taman.mp3" loop={true} volume={0.4} />
+      <SoundManager 
+        soundKey="taman-explore-sound" 
+        src="/assets/sound/taman.mp3" 
+        loop={true} 
+        volume={0.4} 
+        autoPlay={true}
+        playOnInteraction={true}
+      />
 
       {/* Landscape Prompt for Mobile */}
       <LandscapePrompt />

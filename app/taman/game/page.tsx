@@ -117,7 +117,16 @@ export default function TamanGamePage() {
   return (
     <div className="fixed inset-0 overflow-hidden">
       {/* Sound */}
-      <SoundManager src="/assets/sound/Game taman.mp3" loop={true} volume={0.4} />
+      {!gameComplete && (
+        <SoundManager 
+          soundKey="taman-game-sound" 
+          src="/assets/sound/Game taman.mp3" 
+          loop={true} 
+          volume={0.4} 
+          autoPlay={true}
+          playOnInteraction={true}
+        />
+      )}
 
       {/* Landscape Prompt for Mobile */}
       <LandscapePrompt />
