@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { gsap } from 'gsap';
+import Confetti from 'react-confetti';
 import Button from '@/components/Button';
 import SiLala from '@/app/components/SiLala';
 import { getBadges } from '@/lib/storage';
@@ -19,6 +21,15 @@ export default function RewardPage() {
   const router = useRouter();
   const [badges, setBadges] = useState<Badges>({ hutan: false, taman: false, pantai: false });
   const [mounted, setMounted] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const badgeRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const allBadges: Badge[] = [
     { id: 'hutan', name: 'Pahlawan Hutan', emoji: '🌳', color: 'from-green-400 to-green-600' },
@@ -30,6 +41,62 @@ export default function RewardPage() {
     setMounted(true);
     setBadges(getBadges());
   }, []);
+
+  // GSAP animation untuk glassmorphism effect dan transisi masuk
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Animate page entrance dengan GSAP
+    gsap.fromTo('.reward-page-container',
+      {
+        opacity: 0,
+        y: 30,
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+      }
+    );
+
+    // Animate badge cards dengan glassmorphism effect
+    badgeRefs.current.forEach((ref, index) => {
+      if (ref) {
+        const isEarned = badges[allBadges[index].id as keyof Badges];
+        if (isEarned) {
+          // Glassmorphism effect dengan GSAP
+          gsap.fromTo(ref,
+            {
+              opacity: 0,
+              scale: 0.8,
+              y: 50,
+              rotation: -180,
+            },
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              rotation: 0,
+              duration: 0.8,
+              delay: 0.5 + index * 0.15,
+              ease: 'back.out(1.7)',
+            }
+          );
+
+          // Continuous glassmorphism shimmer effect
+          gsap.to(ref, {
+            boxShadow: '0 8px 32px rgba(255, 255, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+            duration: 2,
+            repeat: -1,
+            yoyo: true,
+            ease: 'power1.inOut',
+            delay: 1 + index * 0.15,
+          });
+        }
+      }
+    });
+  }, [mounted, badges]);
 
   const earnedBadges = allBadges.filter(badge => badges[badge.id as keyof Badges]);
   const allComplete = earnedBadges.length === allBadges.length;
@@ -43,37 +110,25 @@ export default function RewardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-4 md:p-8">
-      {/* Confetti effect */}
-      {allComplete && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute text-3xl"
-              initial={{
-                x: Math.random() * window.innerWidth,
-                y: -50,
-                rotate: 0,
-              }}
-              animate={{
-                y: window.innerHeight + 50,
-                rotate: 360,
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 3,
-                ease: "linear",
-              }}
-            >
-              {['🎉', '⭐', '🏆', '🎊', '✨'][Math.floor(Math.random() * 5)]}
-            </motion.div>
-          ))}
-        </div>
+    <motion.div 
+      className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-4 md:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Confetti effect dengan react-confetti */}
+      {allComplete && windowSize.width > 0 && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          numberOfPieces={300}
+          gravity={0.3}
+          recycle={false}
+          tweenDuration={5000}
+        />
       )}
 
-      <div className="relative z-10 mx-auto max-w-4xl">
+      <div className="reward-page-container relative z-10 mx-auto max-w-4xl">
         {/* Header */}
         <motion.div
           className="text-center mb-8"
@@ -126,19 +181,30 @@ export default function RewardPage() {
             return (
               <motion.div
                 key={badge.id}
-                className={`relative rounded-3xl p-6 text-center ${
+                ref={(el) => { badgeRefs.current[index] = el; }}
+                className={`relative rounded-3xl p-6 text-center overflow-hidden ${
                   isEarned
                     ? `bg-gradient-to-br ${badge.color} shadow-2xl`
                     : 'bg-gray-400/50 grayscale'
                 }`}
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
+                style={isEarned ? {
+                  backdropFilter: 'blur(20px)',
+                  background: `linear-gradient(135deg, ${badge.color.includes('green') ? 'rgba(34, 197, 94, 0.3)' : badge.color.includes('yellow') ? 'rgba(250, 204, 21, 0.3)' : 'rgba(59, 130, 246, 0.3)'}, rgba(255, 255, 255, 0.1))`,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 8px 32px rgba(255, 255, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5)',
+                } : {}}
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
                 transition={{
                   duration: 0.6,
                   delay: 0.6 + index * 0.2,
                   type: "spring",
                 }}
-                whileHover={isEarned ? { scale: 1.05, rotate: 5 } : {}}
+                whileHover={isEarned ? { 
+                  scale: 1.05, 
+                  rotate: 5,
+                  boxShadow: '0 12px 40px rgba(255, 255, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6)',
+                } : {}}
               >
                 {/* Badge emoji */}
                 <motion.div

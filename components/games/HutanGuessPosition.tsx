@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import Confetti from 'react-confetti';
 import Button from '@/components/Button';
 import Toast from '@/components/Toast';
 import SiLala from '@/app/components/SiLala';
@@ -38,6 +39,17 @@ export default function HutanGuessPosition() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [gameComplete, setGameComplete] = useState(false);
   const [clickedPosition, setClickedPosition] = useState<{ x: number; y: number } | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [removingBush, setRemovingBush] = useState<string | null>(null);
+
+  useEffect(() => {
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Hewan yang harus dicari di round ini
   const currentAnimal = allAnimals[currentRound];
@@ -83,28 +95,54 @@ export default function HutanGuessPosition() {
     setClickedPosition({ x: clickX, y: clickY });
 
     if (isClickInAnimalArea(clickX, clickY, currentAnimal)) {
-      // Benar! Temukan hewan
-      setFoundAnimals((prev) => new Set([...prev, currentAnimal.id]));
-      setToastMessage(`Benar! Kamu menemukan ${currentAnimal.name}!`);
-      setToastType('success');
-      setShowToast(true);
+      // Benar! Temukan hewan - efek tada dan hilang kotaknya
+      setRemovingBush(currentAnimal.id);
+      setClickedPosition(null);
 
-      // Lanjut ke round berikutnya setelah 1.5 detik
+      // Setelah animasi tada selesai, tambahkan ke found animals
       setTimeout(() => {
-        if (currentRound < totalRounds - 1) {
-          setCurrentRound((prev) => prev + 1);
-          setClickedPosition(null);
-        } else {
-          // Game selesai
-          setGameComplete(true);
-          updateBadge('hutan', true);
-          setTimeout(() => {
-            setToastMessage('Hebat! Kamu sudah menyelesaikan semua round! 🏆');
-            setToastType('success');
-            setShowToast(true);
-          }, 500);
-        }
-      }, 1500);
+        setFoundAnimals((prev) => new Set([...prev, currentAnimal.id]));
+        setRemovingBush(null);
+        setToastMessage(`Benar! Kamu menemukan ${currentAnimal.name}! 🎉`);
+        setToastType('success');
+        setShowToast(true);
+
+        // Lanjut ke round berikutnya setelah 1.5 detik
+        setTimeout(() => {
+          if (currentRound < totalRounds - 1) {
+            setCurrentRound((prev) => prev + 1);
+          } else {
+            // Game selesai - tampilkan modal dengan confetti
+            setGameComplete(true);
+            setShowConfetti(true);
+            updateBadge('hutan', true);
+            
+            // Play success sound
+            try {
+              const audio = new Audio('/assets/sound/success.mp3');
+              audio.volume = 0.3;
+              audio.play().catch(() => {
+                // Fallback jika file tidak ada
+                const beep = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OSfTQ8OUKjl8LZjHAY4kdfyznksBSR3x/DdkEAKFF606euoVRQKRp/g8r5sIQUrgc7y2Yk2CBtpvfDkn00PDlCo5fC2YxwGOJHX8s55LAUkd8fw3ZBAC');
+                beep.volume = 0.3;
+                beep.play().catch(() => {});
+              });
+            } catch (error) {
+              // Ignore audio errors
+            }
+            
+            // Tampilkan modal setelah 500ms
+            setTimeout(() => {
+              setShowSuccessModal(true);
+              // Auto-close modal dan redirect setelah 3 detik
+              setTimeout(() => {
+                setShowSuccessModal(false);
+                setTimeout(() => router.push('/menu'), 1000);
+              }, 3000);
+            }, 500);
+          }
+        }, 1500);
+      }, 600); // Delay untuk animasi tada
     } else {
       // Salah
       setToastMessage('Ups! Coba lagi ya! Cari dengan teliti! 👀');
@@ -118,6 +156,18 @@ export default function HutanGuessPosition() {
 
   return (
     <div className="fixed inset-0 overflow-hidden">
+      {/* Confetti Effect */}
+      {showConfetti && windowSize.width > 0 && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          numberOfPieces={200}
+          gravity={0.3}
+          recycle={false}
+          tweenDuration={4000}
+        />
+      )}
+
       {/* Sound */}
       {!gameComplete && (
         <SoundManager 
@@ -188,17 +238,17 @@ export default function HutanGuessPosition() {
           </p>
         </motion.div>
 
-        {/* Progress - Round indicator - z-index tinggi */}
+        {/* Progress - Round indicator - di pojok kanan atas */}
         <motion.div
-          className="flex justify-center gap-2 mb-2 relative z-50"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 flex gap-1.5 sm:gap-2 z-50"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           {allAnimals.map((animal, index) => (
             <div
               key={animal.id}
-              className={`rounded-full px-3 md:px-4 py-2 shadow-lg flex items-center justify-center ${
+              className={`rounded-full px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3 md:py-2 shadow-lg flex items-center justify-center ${
                 index < currentRound || foundAnimals.has(animal.id)
                   ? 'bg-green-400 ring-2 ring-green-600'
                   : index === currentRound
@@ -207,7 +257,7 @@ export default function HutanGuessPosition() {
               }`}
             >
               <span
-                className={`text-sm md:text-base font-bold ${
+                className={`text-xs sm:text-sm md:text-base font-bold ${
                   index < currentRound || foundAnimals.has(animal.id)
                     ? 'text-green-800'
                     : index === currentRound
@@ -230,6 +280,7 @@ export default function HutanGuessPosition() {
           {/* Semua hewan - sembunyikan yang belum ditemukan dengan semak */}
           {allAnimals.map((animal) => {
             const isFound = foundAnimals.has(animal.id);
+            const isRemoving = removingBush === animal.id;
 
             // Jika sudah ditemukan, tidak perlu render apa-apa (biarkan hewan di background terlihat)
             if (isFound) return null;
@@ -237,7 +288,7 @@ export default function HutanGuessPosition() {
             return (
               <motion.div
                 key={animal.id}
-                className="absolute flex items-center justify-center overflow-visible"
+                className="absolute flex items-center justify-center overflow-visible pointer-events-none"
                 style={{
                   left: `${animal.x}%`,
                   top: `${animal.y}%`,
@@ -249,8 +300,22 @@ export default function HutanGuessPosition() {
                   zIndex: 5, // Z-index rendah agar tidak menutupi UI
                 }}
                 initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", duration: 0.6 }}
+                animate={isRemoving ? {
+                  scale: [1, 1.3, 0],
+                  rotate: [0, 180, 360],
+                  opacity: [1, 0.5, 0],
+                } : {
+                  scale: 1,
+                  rotate: 0,
+                  opacity: 1,
+                }}
+                transition={isRemoving ? {
+                  duration: 0.6,
+                  ease: "easeInOut",
+                } : {
+                  type: "spring",
+                  duration: 0.6,
+                }}
               >
                 {/* Semak sangat tebal untuk benar-benar menyembunyikan hewan - lebih besar dan lebih gelap */}
                 <div
@@ -350,6 +415,62 @@ export default function HutanGuessPosition() {
           )}
         </motion.div>
       </div>
+
+      {/* Success Modal dengan Confetti */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, y: 50, rotate: -10 }}
+              animate={{ scale: 1, opacity: 1, y: 0, rotate: 0 }}
+              exit={{ scale: 0.5, opacity: 0, y: 50, rotate: 10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative bg-gradient-to-br from-green-100 via-white to-green-50 rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-green-400 max-w-md w-full"
+            >
+              <motion.div
+                className="text-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <motion.div
+                  className="text-6xl md:text-7xl mb-4"
+                  animate={{ 
+                    rotate: [0, 10, -10, 10, -10, 0],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{ duration: 0.6 }}
+                >
+                  🎉
+                </motion.div>
+                <motion.h3
+                  className="text-2xl md:text-3xl font-bold text-green-700 mb-2"
+                  style={{ fontFamily: 'var(--font-baloo)' }}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  Selamat! 🏆
+                </motion.h3>
+                <motion.p
+                  className="text-lg md:text-xl text-gray-700 mb-4"
+                  style={{ fontFamily: 'var(--font-baloo)' }}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  Kamu berhasil menemukan semua hewan! Kamu luar biasa! 🌟
+                </motion.p>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Toast
         message={toastMessage}
