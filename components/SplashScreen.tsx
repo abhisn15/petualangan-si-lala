@@ -129,7 +129,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ delay: 1, exit: { duration: 0.3 } }}
+            transition={{ delay: 1, duration: 0.3 }}
           >
             {[0, 1, 2].map((i) => (
               <motion.div
