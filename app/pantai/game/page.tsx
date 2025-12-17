@@ -159,7 +159,7 @@ export default function PantaiGamePage() {
         // Auto-close modal dan redirect setelah 3 detik
         setTimeout(() => {
           setShowSuccessModal(false);
-          setTimeout(() => router.push('/'), 1000);
+          setTimeout(() => router.push('/menu'), 1000);
         }, 3000);
       }, 500);
     }
