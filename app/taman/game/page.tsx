@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
@@ -97,6 +97,7 @@ function generateRandomPositionsTaman(count: number, isDeck: boolean = true): Ar
 
 export default function TamanGamePage() {
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [sortedItems, setSortedItems] = useState<Set<number>>(new Set());
   const [showToast, setShowToast] = useState(false);
@@ -201,10 +202,84 @@ export default function TamanGamePage() {
     setDraggedItem(null);
   };
 
+  // Helper: drop via koordinat (touch)
+  const handleDropByPosition = (itemId: number, xPercent: number, yPercent: number) => {
+    const wasteItem = wasteItems.find((item) => item.id === itemId);
+    if (!wasteItem) return;
+
+    // Cek apakah menyentuh salah satu bin
+    const targetBin = trashBins.find(
+      (bin) =>
+        xPercent >= bin.x &&
+        xPercent <= bin.x + bin.w &&
+        yPercent >= bin.y &&
+        yPercent <= bin.y + bin.h
+    );
+
+    if (!targetBin) {
+      setDraggedItem(null);
+      return;
+    }
+
+    if (wasteItem.type === targetBin.type) {
+      playSoundEffect('success');
+      setSortedItems((prev) => new Set([...prev, itemId]));
+      const newCount = sortedItems.size + 1;
+
+      setToastMessage('Benar! Kamu pintar! 🎉');
+      setToastType('success');
+      setShowToast(true);
+
+      if (newCount === wasteItems.length) {
+        setGameComplete(true);
+        setShowConfetti(true);
+        updateBadge('taman', true);
+        playCelebrationSound();
+        
+        setTimeout(() => {
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            setTimeout(() => router.push('/'), 1000);
+          }, 3000);
+        }, 500);
+      }
+    } else {
+      playSoundEffect('error');
+      setToastMessage('Ups! Coba lagi ya! ❌');
+      setToastType('error');
+      setShowToast(true);
+    }
+
+    setDraggedItem(null);
+  };
+
+  const handleTouchStartItem = (itemId: number) => {
+    if (sortedItems.has(itemId)) return;
+    setDraggedItem(itemId);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!draggedItem || !containerRef.current) {
+      setDraggedItem(null);
+      return;
+    }
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const xPercent = ((touch.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((touch.clientY - rect.top) / rect.height) * 100;
+    handleDropByPosition(draggedItem, xPercent, yPercent);
+  };
+
   const sortedCount = sortedItems.size;
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 w-full h-full overflow-hidden"
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Confetti Effect */}
       {showConfetti && windowSize.width > 0 && (
         <Confetti
@@ -312,6 +387,7 @@ export default function TamanGamePage() {
               draggable
               onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
               onDragEnd={handleDragEnd}
+              onTouchStart={() => handleTouchStartItem(item.id)}
               className={`absolute cursor-grab active:cursor-grabbing z-20 ${isDragging ? 'opacity-60 scale-110' : 'hover:scale-110'}`}
               style={{
                 ...positioningStyle,

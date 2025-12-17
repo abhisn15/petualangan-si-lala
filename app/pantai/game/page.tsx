@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
@@ -73,6 +73,7 @@ function generateRandomPositions(count: number): Array<{ x: number; y: number; r
 
 export default function PantaiGamePage() {
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [cleanedItems, setCleanedItems] = useState<Set<number>>(new Set());
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
@@ -166,10 +167,75 @@ export default function PantaiGamePage() {
     setDraggedItem(null);
   };
 
+  // Helper: drop menggunakan koordinat (untuk touch)
+  const handleDropByPosition = (itemId: number, xPercent: number, yPercent: number) => {
+    const trashItem = trashItems.find((item) => item.id === itemId);
+    if (!trashItem) return;
+
+    const inBasket =
+      xPercent >= basketPosition.x &&
+      xPercent <= basketPosition.x + basketPosition.w &&
+      yPercent >= basketPosition.y &&
+      yPercent <= basketPosition.y + basketPosition.h;
+
+    if (!inBasket) {
+      setDraggedItem(null);
+      return;
+    }
+
+    playSoundEffect('success');
+    setCleanedItems((prev) => new Set([...prev, itemId]));
+    const newCount = cleanedItems.size + 1;
+
+    setToastMessage(`Bagus! ${trashItem.name} sudah dibuang! 🎉`);
+    setToastType('success');
+    setShowToast(true);
+
+    if (newCount === trashItems.length) {
+      setGameComplete(true);
+      setShowHappyFish(true);
+      setShowConfetti(true);
+      updateBadge('pantai', true);
+      playCelebrationSound();
+      
+      setTimeout(() => {
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          setTimeout(() => router.push('/'), 1000);
+        }, 3000);
+      }, 500);
+    }
+
+    setDraggedItem(null);
+  };
+
+  const handleTouchStartItem = (itemId: number) => {
+    if (cleanedItems.has(itemId)) return;
+    setDraggedItem(itemId);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!draggedItem || !containerRef.current) {
+      setDraggedItem(null);
+      return;
+    }
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const xPercent = ((touch.clientX - rect.left) / rect.width) * 100;
+    const yPercent = ((touch.clientY - rect.top) / rect.height) * 100;
+    handleDropByPosition(draggedItem, xPercent, yPercent);
+  };
+
   const cleanedCount = cleanedItems.size;
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 w-full h-full overflow-hidden"
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Confetti Effect */}
       {showConfetti && windowSize.width > 0 && (
         <Confetti
@@ -258,6 +324,7 @@ export default function PantaiGamePage() {
               draggable
               onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item.id)}
               onDragEnd={handleDragEnd}
+              onTouchStart={() => handleTouchStartItem(item.id)}
               className={`absolute cursor-grab active:cursor-grabbing z-20 ${
                 isDragging ? 'opacity-60 scale-110' : 'hover:scale-110'
               }`}
